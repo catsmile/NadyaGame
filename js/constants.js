@@ -1,0 +1,115 @@
+const TILE = 16;
+const GAME_WIDTH = 768;
+const GAME_HEIGHT = 672;
+const ZOOM = 3;
+const VIEW_WIDTH = GAME_WIDTH / ZOOM;   // 256
+const VIEW_HEIGHT = GAME_HEIGHT / ZOOM; // 224
+
+const GRAVITY = 1200;
+
+const PLAYER = {
+    SPEED: 90,
+    JUMP_VELOCITY: -350,
+    JUMP_CUT: -100,
+    BOUNCE: -200,
+    RESPAWN_DELAY: 2000,
+    INVINCIBLE_TIME: 1500
+};
+
+const ENEMY = {
+    GOOMBA_SPEED: 30,
+    KOOPA_SPEED: 30,
+    SHELL_SPEED: 120
+};
+
+const SCORE = {
+    COIN: 200,
+    GOOMBA: 100,
+    KOOPA: 200,
+    FLAG: 5000
+};
+
+const COLORS = {
+    SKY: 0x6185f8,
+    GROUND: 0xc84c0c,
+    GROUND_DARK: 0x9c4a00,
+    BRICK: 0xc84c0c,
+    BRICK_LINES: 0x9c4a00,
+    QUESTION_BLOCK: 0xf8b800,
+    QUESTION_DARK: 0xc87400,
+    QUESTION_USED: 0x886454,
+    PIPE_GREEN: 0x00a800,
+    PIPE_DARK: 0x005800,
+    PIPE_LIGHT: 0x50d848,
+
+    NADYA_HAIR: 0xf83800,
+    NADYA_SKIN: 0xfcbcb0,
+    NADYA_SHIRT: 0xf83800,
+    NADYA_PANTS: 0xac7c00,
+    NADYA_HAT: 0xf83800,
+
+    MARK_HAIR: 0x3858a8,
+    MARK_SKIN: 0xfcbcb0,
+    MARK_SHIRT: 0x3858a8,
+    MARK_PANTS: 0x00a800,
+    MARK_HAT: 0x3858a8,
+
+    GOOMBA_BODY: 0xac7c00,
+    GOOMBA_DARK: 0x7c5800,
+    GOOMBA_FEET: 0xf8b800,
+
+    KOOPA_SHELL: 0x00a800,
+    KOOPA_SHELL_DARK: 0x005800,
+    KOOPA_SKIN: 0xf8d878,
+    KOOPA_FEET: 0xf8b800,
+
+    COIN_GOLD: 0xf8b800,
+    COIN_DARK: 0xc87400,
+
+    FLAG_POLE: 0x888888,
+    FLAG_GREEN: 0x00a800,
+
+    PIRANHA_RED: 0xd82800,
+    PIRANHA_DARK: 0xa81000,
+    PIRANHA_GREEN: 0x00a800,
+    PIRANHA_SPOT: 0xfcfcfc,
+
+    CASTLE_GREY: 0xb8b8b8,
+    CASTLE_DARK: 0x686868,
+
+    CLOUD_WHITE: 0xfcfcfc,
+    CLOUD_LIGHT: 0xacecfc,
+    BUSH_GREEN: 0x00a800,
+    BUSH_DARK: 0x005800,
+    HILL_GREEN: 0x50d848,
+    HILL_DARK: 0x00a800,
+
+    WHITE: 0xfcfcfc,
+    BLACK: 0x000000
+};
+
+const TILES = {
+    EMPTY: 0,
+    GROUND: 1,
+    BRICK: 2,
+    QUESTION: 3,
+    QUESTION_USED: 4,
+    PIPE_TL: 5,
+    PIPE_TR: 6,
+    PIPE_BL: 7,
+    PIPE_BR: 8,
+    INVISIBLE: 9,
+    GROUND_TOP: 10,
+    CASTLE: 11
+};
+
+const PIRANHA = {
+    RISE_TIME: 1000,
+    HIDE_TIME: 2500,
+    SHOW_TIME: 1800,
+    SAFE_DISTANCE: 24
+};
+
+const LEVEL_ROWS = 14;
+const LEVEL_COLS = 210;
+const TIMER_START = 300;
