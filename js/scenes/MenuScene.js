@@ -35,10 +35,9 @@ class MenuScene extends Phaser.Scene {
 
         // Bouncing title
         const title1 = this.add.text(cx, cy - 220, 'NADYA & MARK', {
-            fontSize: '52px',
-            fontFamily: 'monospace',
+            fontSize: '30px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#f83800',
-            fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 4
         }).setOrigin(0.5);
@@ -52,11 +51,10 @@ class MenuScene extends Phaser.Scene {
             ease: 'Sine.easeInOut'
         });
 
-        const title2 = this.add.text(cx, cy - 155, 'SUPER ADVENTURE', {
-            fontSize: '32px',
-            fontFamily: 'monospace',
+        const title2 = this.add.text(cx, cy - 165, 'SUPER ADVENTURE', {
+            fontSize: '16px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#f8b800',
-            fontStyle: 'bold',
             stroke: '#000000',
             strokeThickness: 3
         }).setOrigin(0.5);
@@ -109,17 +107,15 @@ class MenuScene extends Phaser.Scene {
         });
 
         this.add.text(cx - 80, cy + 10, 'NADYA', {
-            fontSize: '18px',
-            fontFamily: 'monospace',
-            color: '#f83800',
-            fontStyle: 'bold'
+            fontSize: '11px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#f83800'
         }).setOrigin(0.5);
 
         this.add.text(cx + 80, cy + 10, 'MARK', {
-            fontSize: '18px',
-            fontFamily: 'monospace',
-            color: '#3858a8',
-            fontStyle: 'bold'
+            fontSize: '11px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#3858a8'
         }).setOrigin(0.5);
 
         // Decorative coins
@@ -139,32 +135,28 @@ class MenuScene extends Phaser.Scene {
         const modeY = cy + 100;
 
         this.add.text(cx, modeY - 15, 'SELECT MODE', {
-            fontSize: '18px',
-            fontFamily: 'monospace',
-            color: '#fcfcfc',
-            fontStyle: 'bold'
+            fontSize: '10px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
         }).setOrigin(0.5);
 
-        this.option1 = this.add.text(cx, modeY + 20, '1 PLAYER', {
-            fontSize: '22px',
-            fontFamily: 'monospace',
-            color: '#fcfcfc',
-            fontStyle: 'bold'
+        this.option1 = this.add.text(cx, modeY + 18, '1 PLAYER', {
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
         }).setOrigin(0.5);
 
-        this.option2 = this.add.text(cx, modeY + 55, '2 PLAYERS', {
-            fontSize: '22px',
-            fontFamily: 'monospace',
-            color: '#fcfcfc',
-            fontStyle: 'bold'
+        this.option2 = this.add.text(cx, modeY + 50, '2 PLAYERS', {
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
         }).setOrigin(0.5);
 
         // Selection arrow
-        this.arrow = this.add.text(cx - 100, modeY + 20, '>', {
-            fontSize: '22px',
-            fontFamily: 'monospace',
-            color: '#f8b800',
-            fontStyle: 'bold'
+        this.arrow = this.add.text(cx - 110, modeY + 18, '\u25B6', {
+            fontSize: '12px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#f8b800'
         }).setOrigin(0.5);
 
         // Arrow blink
@@ -181,10 +173,10 @@ class MenuScene extends Phaser.Scene {
         // Controls hint
         const ctrlY = cy + 185;
         this.controlsText = this.add.text(cx, ctrlY, '', {
-            fontSize: '12px',
-            fontFamily: 'monospace',
+            fontSize: '8px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#acecfc',
-            lineSpacing: 3,
+            lineSpacing: 6,
             align: 'center'
         }).setOrigin(0.5);
 
@@ -192,10 +184,9 @@ class MenuScene extends Phaser.Scene {
 
         // Start prompt
         const startText = this.add.text(cx, cy + 260, 'PRESS ENTER OR SPACE', {
-            fontSize: '18px',
-            fontFamily: 'monospace',
-            color: '#50d848',
-            fontStyle: 'bold'
+            fontSize: '10px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#50d848'
         }).setOrigin(0.5);
 
         this.tweens.add({
@@ -227,7 +218,7 @@ class MenuScene extends Phaser.Scene {
 
     updateSelection() {
         const modeY = GAME_HEIGHT / 2 + 100;
-        this.arrow.y = modeY + 20 + this.selected * 35;
+        this.arrow.y = modeY + 18 + this.selected * 32;
         this.option1.setColor(this.selected === 0 ? '#f8b800' : '#888888');
         this.option2.setColor(this.selected === 1 ? '#f8b800' : '#888888');
     }

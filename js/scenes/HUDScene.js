@@ -9,33 +9,32 @@ class HUDScene extends Phaser.Scene {
 
     create() {
         const style = {
-            fontSize: '24px',
-            fontFamily: 'monospace',
-            color: '#fcfcfc',
-            fontStyle: 'bold'
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
         };
 
         const smallStyle = {
-            fontSize: '20px',
-            fontFamily: 'monospace',
+            fontSize: '12px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         };
 
         // Score
         this.add.text(20, 16, 'SCORE', style);
-        this.scoreText = this.add.text(20, 44, '000000', smallStyle);
+        this.scoreText = this.add.text(20, 38, '000000', smallStyle);
 
         // Coins
-        this.add.text(260, 16, 'COINS', style);
-        this.coinText = this.add.text(260, 44, 'x00', smallStyle);
+        this.add.text(250, 16, 'COINS', style);
+        this.coinText = this.add.text(250, 38, 'x00', smallStyle);
 
         // World
-        this.add.text(480, 16, 'WORLD', style);
-        this.add.text(480, 44, '1-1', smallStyle);
+        this.add.text(460, 16, 'WORLD', style);
+        this.add.text(460, 38, '1-1', smallStyle);
 
         // Timer
-        this.add.text(640, 16, 'TIME', style);
-        this.timerText = this.add.text(640, 44, '300', smallStyle);
+        this.add.text(630, 16, 'TIME', style);
+        this.timerText = this.add.text(630, 38, '300', smallStyle);
     }
 
     update() {

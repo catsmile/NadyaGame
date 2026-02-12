@@ -373,8 +373,8 @@ class GameScene extends Phaser.Scene {
 
         // Score popup
         const popup = this.add.text(player.x, player.y - 12, String(SCORE.MUSHROOM), {
-            fontSize: '8px',
-            fontFamily: 'monospace',
+            fontSize: '7px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         }).setOrigin(0.5).setDepth(20);
         this.tweens.add({
@@ -569,8 +569,8 @@ class GameScene extends Phaser.Scene {
 
         // Show score popup
         const popup = this.add.text(player.x, player.y - 8, String(flagScore), {
-            fontSize: '8px',
-            fontFamily: 'monospace',
+            fontSize: '7px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         }).setOrigin(0.5).setDepth(20);
         this.tweens.add({

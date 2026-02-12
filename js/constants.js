@@ -1,3 +1,6 @@
+const FONT = '"Press Start 2P"';
+const FONT_PAD = { top: 4, bottom: 2, left: 0, right: 0 };
+
 const TILE = 16;
 const GAME_WIDTH = 768;
 const GAME_HEIGHT = 672;

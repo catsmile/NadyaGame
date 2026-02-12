@@ -14,42 +14,42 @@ class GameOverScene extends Phaser.Scene {
         const cy = GAME_HEIGHT / 2;
 
         if (this.win) {
-            this.add.text(cx, cy - 120, 'LEVEL COMPLETE!', {
-                fontSize: '42px',
-                fontFamily: 'monospace',
+            this.add.text(cx, cy - 120, 'LEVEL\nCOMPLETE!', {
+                fontSize: '28px',
+                fontFamily: FONT, padding: FONT_PAD,
                 color: '#50d848',
-                fontStyle: 'bold'
+                align: 'center',
+                lineSpacing: 8
             }).setOrigin(0.5);
 
-            this.add.text(cx, cy - 40, 'CONGRATULATIONS!', {
-                fontSize: '28px',
-                fontFamily: 'monospace',
+            this.add.text(cx, cy - 30, 'CONGRATULATIONS!', {
+                fontSize: '14px',
+                fontFamily: FONT, padding: FONT_PAD,
                 color: '#f8b800'
             }).setOrigin(0.5);
         } else {
-            this.add.text(cx, cy - 120, 'GAME OVER', {
-                fontSize: '48px',
-                fontFamily: 'monospace',
-                color: '#f83800',
-                fontStyle: 'bold'
+            this.add.text(cx, cy - 100, 'GAME OVER', {
+                fontSize: '30px',
+                fontFamily: FONT, padding: FONT_PAD,
+                color: '#f83800'
             }).setOrigin(0.5);
         }
 
-        this.add.text(cx, cy + 20, 'SCORE: ' + String(this.finalScore).padStart(6, '0'), {
-            fontSize: '24px',
-            fontFamily: 'monospace',
+        this.add.text(cx, cy + 30, 'SCORE ' + String(this.finalScore).padStart(6, '0'), {
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         }).setOrigin(0.5);
 
-        this.add.text(cx, cy + 60, 'COINS: ' + this.finalCoins, {
-            fontSize: '24px',
-            fontFamily: 'monospace',
+        this.add.text(cx, cy + 65, 'COINS ' + this.finalCoins, {
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#f8b800'
         }).setOrigin(0.5);
 
         const restartText = this.add.text(cx, cy + 140, 'PRESS ENTER TO RESTART', {
-            fontSize: '20px',
-            fontFamily: 'monospace',
+            fontSize: '10px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         }).setOrigin(0.5);
 
@@ -61,9 +61,9 @@ class GameOverScene extends Phaser.Scene {
             repeat: -1
         });
 
-        const backText = this.add.text(cx, cy + 180, 'PRESS ESC FOR MENU', {
-            fontSize: '16px',
-            fontFamily: 'monospace',
+        this.add.text(cx, cy + 175, 'ESC FOR MENU', {
+            fontSize: '8px',
+            fontFamily: FONT, padding: FONT_PAD,
             color: '#acecfc'
         }).setOrigin(0.5);
 
