@@ -3,6 +3,10 @@ class GameScene extends Phaser.Scene {
         super('GameScene');
     }
 
+    init(data) {
+        this.playerCount = (data && data.playerCount) || 2;
+    }
+
     create() {
         this.score = 0;
         this.coinCount = 0;
@@ -19,7 +23,16 @@ class GameScene extends Phaser.Scene {
 
         // Create players
         this.player1 = new Player(this, 3 * TILE, 10 * TILE, 'nadya');
-        this.player2 = new Player(this, 4 * TILE, 10 * TILE, 'mark');
+        if (this.playerCount >= 2) {
+            this.player2 = new Player(this, 4 * TILE, 10 * TILE, 'mark');
+        } else {
+            // Dummy invisible player 2 for single-player mode
+            this.player2 = new Player(this, 3 * TILE, 10 * TILE, 'mark');
+            this.player2.setVisible(false);
+            this.player2.alive = false;
+            this.player2.body.checkCollision.none = true;
+            this.player2.body.setAllowGravity(false);
+        }
 
         // Input
         this.inputManager = new InputManager(this);
@@ -528,11 +541,12 @@ class GameScene extends Phaser.Scene {
 
     playerPiranhaCollision(player, plant) {
         if (!player.alive || player.invincible) return;
+        if (!plant.active) return;
         if (plant.state === 'hidden') return;
 
         // Fire power-up kills piranha
         if (player.hasFire) {
-            plant.destroy();
+            plant.disableBody(true, true);
             this.addScore(SCORE.GOOMBA);
             return;
         }
@@ -582,7 +596,7 @@ class GameScene extends Phaser.Scene {
 
     checkLevelComplete() {
         const p1Done = this.player1.finished || !this.player1.alive;
-        const p2Done = this.player2.finished || !this.player2.alive;
+        const p2Done = this.playerCount === 1 ? true : (this.player2.finished || !this.player2.alive);
 
         if (p1Done && p2Done && !this.levelComplete) {
             this.levelComplete = true;
@@ -606,7 +620,7 @@ class GameScene extends Phaser.Scene {
         this.gameTimer--;
         if (this.gameTimer <= 0) {
             this.player1.die();
-            this.player2.die();
+            if (this.playerCount >= 2) this.player2.die();
             this.triggerGameOver();
         }
     }
@@ -615,21 +629,27 @@ class GameScene extends Phaser.Scene {
         const p1Dead = !this.player1.alive;
         const p2Dead = !this.player2.alive;
 
-        if (p1Dead && p2Dead) {
-            this.triggerGameOver();
-        } else if (p1Dead && this.player2.alive) {
-            // Respawn player 1 near player 2 after delay
-            this.time.delayedCall(PLAYER.RESPAWN_DELAY, () => {
-                if (this.player2.alive && !this.gameOver) {
-                    this.player1.respawn(this.player2.x - 16, this.player2.y);
-                }
-            });
-        } else if (p2Dead && this.player1.alive) {
-            this.time.delayedCall(PLAYER.RESPAWN_DELAY, () => {
-                if (this.player1.alive && !this.gameOver) {
-                    this.player2.respawn(this.player1.x + 16, this.player1.y);
-                }
-            });
+        if (this.playerCount === 1) {
+            // Single player — game over when player 1 dies
+            if (p1Dead) {
+                this.triggerGameOver();
+            }
+        } else {
+            if (p1Dead && p2Dead) {
+                this.triggerGameOver();
+            } else if (p1Dead && this.player2.alive) {
+                this.time.delayedCall(PLAYER.RESPAWN_DELAY, () => {
+                    if (this.player2.alive && !this.gameOver) {
+                        this.player1.respawn(this.player2.x - 16, this.player2.y);
+                    }
+                });
+            } else if (p2Dead && this.player1.alive) {
+                this.time.delayedCall(PLAYER.RESPAWN_DELAY, () => {
+                    if (this.player1.alive && !this.gameOver) {
+                        this.player2.respawn(this.player1.x + 16, this.player1.y);
+                    }
+                });
+            }
         }
     }
 
@@ -651,10 +671,11 @@ class GameScene extends Phaser.Scene {
 
         // Input handling
         const p1Input = this.inputManager.getP1();
-        const p2Input = this.inputManager.getP2();
-
         this.player1.handleInput(p1Input);
-        this.player2.handleInput(p2Input);
+        if (this.playerCount >= 2) {
+            const p2Input = this.inputManager.getP2();
+            this.player2.handleInput(p2Input);
+        }
 
         // Camera
         this.cameraManager.update();
@@ -681,7 +702,8 @@ class GameScene extends Phaser.Scene {
             if (k.update) k.update();
         });
 
-        // Update piranha plants
+        // Update piranha plants (filter out destroyed ones)
+        this.piranhaPlants = this.piranhaPlants.filter(p => p.active);
         const alivePlayers = [this.player1, this.player2];
         this.piranhaPlants.forEach(p => p.update(alivePlayers));
 

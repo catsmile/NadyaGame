@@ -6,82 +6,274 @@ class MenuScene extends Phaser.Scene {
     create() {
         const cx = GAME_WIDTH / 2;
         const cy = GAME_HEIGHT / 2;
+        this.selected = 0; // 0 = 1 player, 1 = 2 players
 
-        // Title
-        this.add.text(cx, cy - 200, 'NADYA & MARK', {
-            fontSize: '48px',
+        // Animated background — scrolling ground
+        this.bgTiles = [];
+        for (let i = 0; i < 60; i++) {
+            const t = this.add.image(i * 16, GAME_HEIGHT - 32, 'ground_top').setOrigin(0, 0).setScale(2);
+            this.bgTiles.push(t);
+            const t2 = this.add.image(i * 16, GAME_HEIGHT - 16, 'ground').setOrigin(0, 0).setScale(2);
+            this.bgTiles.push(t2);
+        }
+
+        // Clouds drifting
+        for (let i = 0; i < 5; i++) {
+            const cloud = this.add.image(
+                Phaser.Math.Between(0, GAME_WIDTH),
+                Phaser.Math.Between(40, 160),
+                'cloud'
+            ).setScale(2).setAlpha(0.7);
+            this.tweens.add({
+                targets: cloud,
+                x: cloud.x + 300,
+                duration: Phaser.Math.Between(8000, 15000),
+                repeat: -1,
+                onRepeat: () => { cloud.x = -100; }
+            });
+        }
+
+        // Bouncing title
+        const title1 = this.add.text(cx, cy - 220, 'NADYA & MARK', {
+            fontSize: '52px',
+            fontFamily: 'monospace',
+            color: '#f83800',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 4
+        }).setOrigin(0.5);
+
+        this.tweens.add({
+            targets: title1,
+            y: title1.y - 8,
+            duration: 800,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+
+        const title2 = this.add.text(cx, cy - 155, 'SUPER ADVENTURE', {
+            fontSize: '32px',
+            fontFamily: 'monospace',
+            color: '#f8b800',
+            fontStyle: 'bold',
+            stroke: '#000000',
+            strokeThickness: 3
+        }).setOrigin(0.5);
+
+        // Rainbow shimmer on subtitle
+        const subtitleColors = [0xf8b800, 0xff6600, 0xf83800, 0xff6600];
+        let colorIdx = 0;
+        this.time.addEvent({
+            delay: 300,
+            loop: true,
+            callback: () => {
+                colorIdx = (colorIdx + 1) % subtitleColors.length;
+                title2.setTint(subtitleColors[colorIdx]);
+            }
+        });
+
+        // Animated characters — walking in place
+        this.nadyaPreview = this.add.sprite(cx - 80, cy - 50, 'nadya_1').setScale(5);
+        this.markPreview = this.add.sprite(cx + 80, cy - 50, 'mark_1').setScale(5);
+
+        // Bounce characters
+        this.tweens.add({
+            targets: this.nadyaPreview,
+            y: this.nadyaPreview.y - 6,
+            duration: 400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut'
+        });
+        this.tweens.add({
+            targets: this.markPreview,
+            y: this.markPreview.y - 6,
+            duration: 400,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Sine.easeInOut',
+            delay: 200
+        });
+
+        // Swap walk frames
+        let walkFrame = 0;
+        this.time.addEvent({
+            delay: 250,
+            loop: true,
+            callback: () => {
+                walkFrame = walkFrame === 1 ? 2 : 1;
+                this.nadyaPreview.setTexture('nadya_' + walkFrame);
+                this.markPreview.setTexture('mark_' + walkFrame);
+            }
+        });
+
+        this.add.text(cx - 80, cy + 10, 'NADYA', {
+            fontSize: '18px',
             fontFamily: 'monospace',
             color: '#f83800',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.add.text(cx, cy - 140, 'SUPER ADVENTURE', {
-            fontSize: '36px',
+        this.add.text(cx + 80, cy + 10, 'MARK', {
+            fontSize: '18px',
             fontFamily: 'monospace',
-            color: '#f8b800',
+            color: '#3858a8',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        // Characters preview
-        this.add.image(cx - 60, cy - 40, 'nadya_0').setScale(5);
-        this.add.image(cx + 60, cy - 40, 'mark_0').setScale(5);
+        // Decorative coins
+        for (let i = 0; i < 3; i++) {
+            const coin = this.add.sprite(cx - 40 + i * 40, cy + 45, 'coin_0').setScale(2);
+            this.tweens.add({
+                targets: coin,
+                y: coin.y - 4,
+                duration: 500,
+                yoyo: true,
+                repeat: -1,
+                delay: i * 150
+            });
+        }
 
-        this.add.text(cx - 60, cy + 20, 'NADYA', {
-            fontSize: '16px',
-            fontFamily: 'monospace',
-            color: '#f83800'
-        }).setOrigin(0.5);
+        // Mode selection
+        const modeY = cy + 100;
 
-        this.add.text(cx + 60, cy + 20, 'MARK', {
-            fontSize: '16px',
-            fontFamily: 'monospace',
-            color: '#3858a8'
-        }).setOrigin(0.5);
-
-        // Controls info
-        const controlsY = cy + 80;
-        this.add.text(cx, controlsY, 'CONTROLS', {
-            fontSize: '20px',
+        this.add.text(cx, modeY - 15, 'SELECT MODE', {
+            fontSize: '18px',
             fontFamily: 'monospace',
             color: '#fcfcfc',
             fontStyle: 'bold'
         }).setOrigin(0.5);
 
-        this.add.text(cx - 140, controlsY + 35, 'NADYA (P1):\nMove: WASD\nJump: SPACE', {
-            fontSize: '14px',
+        this.option1 = this.add.text(cx, modeY + 20, '1 PLAYER', {
+            fontSize: '22px',
             fontFamily: 'monospace',
-            color: '#fcbcb0',
-            lineSpacing: 4
+            color: '#fcfcfc',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        this.option2 = this.add.text(cx, modeY + 55, '2 PLAYERS', {
+            fontSize: '22px',
+            fontFamily: 'monospace',
+            color: '#fcfcfc',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // Selection arrow
+        this.arrow = this.add.text(cx - 100, modeY + 20, '>', {
+            fontSize: '22px',
+            fontFamily: 'monospace',
+            color: '#f8b800',
+            fontStyle: 'bold'
+        }).setOrigin(0.5);
+
+        // Arrow blink
+        this.tweens.add({
+            targets: this.arrow,
+            alpha: 0.3,
+            duration: 300,
+            yoyo: true,
+            repeat: -1
         });
 
-        this.add.text(cx + 20, controlsY + 35, 'MARK (P2):\nMove: Arrows\nJump: Numpad0 / Enter', {
-            fontSize: '14px',
+        this.updateSelection();
+
+        // Controls hint
+        const ctrlY = cy + 185;
+        this.controlsText = this.add.text(cx, ctrlY, '', {
+            fontSize: '12px',
             fontFamily: 'monospace',
-            color: '#fcbcb0',
-            lineSpacing: 4
-        });
+            color: '#acecfc',
+            lineSpacing: 3,
+            align: 'center'
+        }).setOrigin(0.5);
+
+        this.updateControlsHint();
 
         // Start prompt
-        const startText = this.add.text(cx, cy + 220, 'PRESS ENTER TO START', {
-            fontSize: '20px',
+        const startText = this.add.text(cx, cy + 260, 'PRESS ENTER OR SPACE', {
+            fontSize: '18px',
             fontFamily: 'monospace',
-            color: '#fcfcfc'
+            color: '#50d848',
+            fontStyle: 'bold'
         }).setOrigin(0.5);
 
         this.tweens.add({
             targets: startText,
-            alpha: 0,
+            alpha: 0.2,
             duration: 500,
             yoyo: true,
             repeat: -1
         });
 
-        this.input.keyboard.on('keydown-ENTER', () => {
-            this.scene.start('GameScene');
-        });
+        // Small enemies walking across the bottom
+        this.spawnMenuEnemies();
 
-        this.input.keyboard.on('keydown-SPACE', () => {
-            this.scene.start('GameScene');
-        });
+        // Input
+        this.input.keyboard.on('keydown-UP', () => this.changeSelection(-1));
+        this.input.keyboard.on('keydown-DOWN', () => this.changeSelection(1));
+        this.input.keyboard.on('keydown-W', () => this.changeSelection(-1));
+        this.input.keyboard.on('keydown-S', () => this.changeSelection(1));
+
+        this.input.keyboard.on('keydown-ENTER', () => this.startGame());
+        this.input.keyboard.on('keydown-SPACE', () => this.startGame());
+    }
+
+    changeSelection(dir) {
+        this.selected = Phaser.Math.Clamp(this.selected + dir, 0, 1);
+        this.updateSelection();
+        this.updateControlsHint();
+    }
+
+    updateSelection() {
+        const modeY = GAME_HEIGHT / 2 + 100;
+        this.arrow.y = modeY + 20 + this.selected * 35;
+        this.option1.setColor(this.selected === 0 ? '#f8b800' : '#888888');
+        this.option2.setColor(this.selected === 1 ? '#f8b800' : '#888888');
+    }
+
+    updateControlsHint() {
+        if (this.selected === 0) {
+            this.controlsText.setText('WASD: Move    SPACE: Jump');
+        } else {
+            this.controlsText.setText(
+                'P1 (Nadya): WASD + SPACE\nP2 (Mark): Arrows + Numpad0/Enter'
+            );
+        }
+    }
+
+    spawnMenuEnemies() {
+        const y = GAME_HEIGHT - 64;
+        for (let i = 0; i < 3; i++) {
+            const goomba = this.add.sprite(
+                Phaser.Math.Between(-50, -200),
+                y,
+                'goomba_0'
+            ).setScale(2);
+
+            this.tweens.add({
+                targets: goomba,
+                x: GAME_WIDTH + 50,
+                duration: Phaser.Math.Between(6000, 10000),
+                repeat: -1,
+                delay: i * 2500,
+                onRepeat: () => { goomba.x = -50; }
+            });
+
+            // Swap walk frames
+            this.time.addEvent({
+                delay: 250,
+                loop: true,
+                callback: () => {
+                    goomba.setTexture(
+                        goomba.texture.key === 'goomba_0' ? 'goomba_1' : 'goomba_0'
+                    );
+                }
+            });
+        }
+    }
+
+    startGame() {
+        this.scene.start('GameScene', { playerCount: this.selected + 1 });
     }
 }

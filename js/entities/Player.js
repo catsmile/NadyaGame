@@ -133,6 +133,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.body.checkCollision.none = true;
         this.setDepth(20);
 
+        // Glitch effect
+        if (this.scene.screenGlitch) {
+            this.scene.screenGlitch();
+        }
+
         this.scene.time.delayedCall(2000, () => {
             this.setVisible(false);
         });
