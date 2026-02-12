@@ -38,6 +38,7 @@ class MenuScene extends Phaser.Scene {
         this.spawnMenuQuestionBlocks();
         this.spawnMenuPipe();
         this.spawnMenuEnemies();
+        this.spawnMenuInvaders();
 
         // Bouncing title
         const title1 = this.add.text(cx, cy - 220, 'NADYA & MARK', {
@@ -228,10 +229,10 @@ class MenuScene extends Phaser.Scene {
 
     updateControlsHint() {
         if (this.selected === 0) {
-            this.controlsText.setText('WASD: Move    SPACE: Jump');
+            this.controlsText.setText('AD: Move  SPACE: Jump  W: Shoot');
         } else {
             this.controlsText.setText(
-                'P1 (Nadya): WASD + SPACE\nP2 (Mark): Arrows + Numpad0/Enter'
+                'P1 (Nadya): AD+SPACE  W: Shoot\nP2 (Mark): Arrows+Numpad0  UP: Shoot'
             );
         }
     }
@@ -339,6 +340,140 @@ class MenuScene extends Phaser.Scene {
                 ease: 'Sine.easeInOut'
             });
         });
+    }
+
+    spawnMenuInvaders() {
+        this.menuInvaders = [];
+        this.menuBullets = [];
+
+        // 3 invaders drifting across the top
+        for (let i = 0; i < 3; i++) {
+            const inv = this.add.sprite(
+                Phaser.Math.Between(100, GAME_WIDTH - 100),
+                Phaser.Math.Between(30, 110),
+                'invader_0'
+            ).setScale(2.5).setDepth(6);
+            inv.dirX = (Math.random() < 0.5 ? 1 : -1) * Phaser.Math.Between(30, 60);
+            inv.dirY = (Math.random() < 0.5 ? 1 : -1) * Phaser.Math.Between(8, 20);
+            this.menuInvaders.push(inv);
+        }
+
+        // Animate invader frames
+        this.time.addEvent({
+            delay: 300,
+            loop: true,
+            callback: () => {
+                this.menuInvaders.forEach(inv => {
+                    if (!inv.active) return;
+                    inv.setTexture(inv.texture.key === 'invader_0' ? 'invader_1' : 'invader_0');
+                });
+            }
+        });
+
+        // Characters shoot randomly at invaders
+        this.time.addEvent({
+            delay: Phaser.Math.Between(1200, 2500),
+            loop: true,
+            callback: () => {
+                this.menuCharacterShoot();
+            }
+        });
+    }
+
+    menuCharacterShoot() {
+        // Pick a random shooter: nadya or mark
+        const shooter = Math.random() < 0.5 ? this.nadyaPreview : this.markPreview;
+
+        // Create bullet — flies straight up
+        const bullet = this.add.rectangle(shooter.x, shooter.y - 30, 6, 14, 0xf8f800).setDepth(11);
+        bullet.shooterX = shooter.x;
+        this.menuBullets.push(bullet);
+
+        const targetY = -20;
+        const dist = bullet.y - targetY;
+        const duration = dist * 2.5;
+
+        this.tweens.add({
+            targets: bullet,
+            y: targetY,
+            duration: duration,
+            ease: 'Linear',
+            onUpdate: () => {
+                if (!bullet.active) return;
+                // Check hit against invaders while flying up
+                for (const inv of this.menuInvaders) {
+                    if (!inv.active || !inv.visible) continue;
+                    if (Math.abs(bullet.x - inv.x) < 20 && Math.abs(bullet.y - inv.y) < 20) {
+                        bullet.destroy();
+                        this.menuInvaderExplode(inv);
+                        return;
+                    }
+                }
+            },
+            onComplete: () => {
+                // Missed — destroy bullet off screen
+                if (bullet.active) bullet.destroy();
+            }
+        });
+    }
+
+    menuInvaderExplode(inv) {
+        const ex = inv.x;
+        const ey = inv.y;
+        inv.setVisible(false);
+
+        // Green particle burst
+        for (let i = 0; i < 6; i++) {
+            const p = this.add.rectangle(
+                ex + Phaser.Math.Between(-4, 4),
+                ey + Phaser.Math.Between(-4, 4),
+                Phaser.Math.Between(4, 8),
+                Phaser.Math.Between(4, 8),
+                Phaser.Math.RND.pick([0x00e800, 0x50ff50, 0x00a800])
+            ).setDepth(15);
+            this.tweens.add({
+                targets: p,
+                x: p.x + Phaser.Math.Between(-40, 40),
+                y: p.y + Phaser.Math.Between(-40, 40),
+                alpha: 0,
+                scaleX: 0.2,
+                scaleY: 0.2,
+                duration: Phaser.Math.Between(300, 500),
+                onComplete: () => p.destroy()
+            });
+        }
+
+        // Respawn after delay at random edge
+        this.time.delayedCall(Phaser.Math.Between(1500, 3000), () => {
+            if (!inv.active) return;
+            inv.setVisible(true);
+            const fromLeft = Math.random() < 0.5;
+            inv.x = fromLeft ? -30 : GAME_WIDTH + 30;
+            inv.y = Phaser.Math.Between(30, 110);
+            inv.dirX = fromLeft ? Phaser.Math.Between(30, 60) : -Phaser.Math.Between(30, 60);
+            inv.dirY = (Math.random() < 0.5 ? 1 : -1) * Phaser.Math.Between(8, 20);
+        });
+    }
+
+    update(time, delta) {
+        const dt = delta / 1000;
+
+        // Move invaders
+        if (this.menuInvaders) {
+            this.menuInvaders.forEach(inv => {
+                if (!inv.active || !inv.visible) return;
+                inv.x += inv.dirX * dt;
+                inv.y += inv.dirY * dt;
+
+                // Bounce off top/bottom
+                if (inv.y < 20 || inv.y > 120) {
+                    inv.dirY *= -1;
+                }
+                // Wrap horizontally
+                if (inv.x < -40) { inv.x = GAME_WIDTH + 30; }
+                if (inv.x > GAME_WIDTH + 40) { inv.x = -30; }
+            });
+        }
     }
 
     startGame() {

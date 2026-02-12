@@ -15,6 +15,9 @@ class SpriteGenerator {
         this.generateMushrooms();
         this.generateDecorations();
         this.generateCastle();
+        this.generateInvader();
+        this.generateInvaderBomb();
+        this.generatePlayerBullet();
     }
 
     // -- Tiles --
@@ -642,6 +645,109 @@ class SpriteGenerator {
         g.fillRect(22, 6, 4, 4);
 
         g.generateTexture('castle', 48, 48);
+        g.destroy();
+    }
+
+    // -- Invader (2 frames: legs open / legs closed, Space Invaders style) --
+    generateInvader() {
+        const g = this.scene.make.graphics({ add: false });
+
+        for (let f = 0; f < 2; f++) {
+            g.clear();
+            const c = 0x00e800; // bright green
+
+            // Body core
+            g.fillStyle(c);
+            g.fillRect(5, 2, 6, 2);   // top
+            g.fillRect(3, 4, 10, 2);  // upper body
+            g.fillRect(2, 6, 12, 2);  // mid body
+            g.fillRect(1, 8, 14, 2);  // lower body
+
+            // Eyes
+            g.fillStyle(COLORS.BLACK);
+            g.fillRect(4, 6, 2, 2);
+            g.fillRect(10, 6, 2, 2);
+
+            // Antennae
+            g.fillStyle(c);
+            g.fillRect(3, 0, 2, 2);
+            g.fillRect(11, 0, 2, 2);
+
+            // Legs (animate between frames)
+            if (f === 0) {
+                // Legs spread out
+                g.fillRect(1, 10, 2, 2);
+                g.fillRect(4, 10, 2, 2);
+                g.fillRect(10, 10, 2, 2);
+                g.fillRect(13, 10, 2, 2);
+                g.fillRect(0, 12, 2, 2);
+                g.fillRect(14, 12, 2, 2);
+            } else {
+                // Legs tucked in
+                g.fillRect(2, 10, 2, 2);
+                g.fillRect(5, 10, 2, 2);
+                g.fillRect(9, 10, 2, 2);
+                g.fillRect(12, 10, 2, 2);
+                g.fillRect(3, 12, 2, 2);
+                g.fillRect(11, 12, 2, 2);
+            }
+
+            g.generateTexture('invader_' + f, 16, 16);
+        }
+
+        g.destroy();
+
+        this.scene.anims.create({
+            key: 'invader_fly',
+            frames: [
+                { key: 'invader_0' },
+                { key: 'invader_1' }
+            ],
+            frameRate: 3,
+            repeat: -1
+        });
+    }
+
+    // -- Invader Bomb (2 frames: red/orange flicker) --
+    generateInvaderBomb() {
+        const g = this.scene.make.graphics({ add: false });
+
+        for (let f = 0; f < 2; f++) {
+            g.clear();
+            const color = f === 0 ? 0xff2020 : 0xff8800;
+
+            g.fillStyle(color);
+            g.fillRect(1, 0, 2, 8);
+            g.fillRect(0, 2, 4, 4);
+
+            g.generateTexture('invader_bomb_' + f, 4, 8);
+        }
+
+        g.destroy();
+
+        this.scene.anims.create({
+            key: 'invader_bomb_flash',
+            frames: [
+                { key: 'invader_bomb_0' },
+                { key: 'invader_bomb_1' }
+            ],
+            frameRate: 8,
+            repeat: -1
+        });
+    }
+
+    // -- Player Bullet (yellow vertical stroke) --
+    generatePlayerBullet() {
+        const g = this.scene.make.graphics({ add: false });
+
+        g.clear();
+        g.fillStyle(0xf8f800);
+        g.fillRect(1, 0, 2, 8);
+        g.fillStyle(0xfcfcfc);
+        g.fillRect(1, 0, 2, 2);
+
+        g.generateTexture('player_bullet', 4, 8);
+
         g.destroy();
     }
 }

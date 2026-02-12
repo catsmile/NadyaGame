@@ -18,6 +18,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.fireTimer = null;
         this.lowGravTimer = null;
         this.fireParticleTimer = 0;
+        this.shootCooldownTimer = 0;
 
         scene.add.existing(this);
         scene.physics.add.existing(this);
@@ -58,6 +59,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // Variable jump height: cut jump short if button released
         if (!input.jump && this.body.velocity.y < PLAYER.JUMP_CUT) {
             this.setVelocityY(PLAYER.JUMP_CUT);
+        }
+
+        // Shooting
+        if (this.shootCooldownTimer > 0) {
+            this.shootCooldownTimer -= this.scene.game.loop.delta;
+        }
+        if (input.shootJustDown && this.shootCooldownTimer <= 0) {
+            this.shootCooldownTimer = PLAYER.SHOOT_COOLDOWN;
+            if (this.scene.spawnPlayerBullet) {
+                this.scene.spawnPlayerBullet(this);
+            }
         }
 
         // Animations

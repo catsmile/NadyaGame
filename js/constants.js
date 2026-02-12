@@ -20,7 +20,9 @@ const PLAYER = {
     MAX_JUMPS: 2,
     FIRE_DURATION: 10000,
     LOW_GRAV_DURATION: 12000,
-    LOW_GRAV_FACTOR: 0.5
+    LOW_GRAV_FACTOR: 0.5,
+    SHOOT_COOLDOWN: 500,
+    BULLET_SPEED: 300
 };
 
 const ENEMY = {
@@ -29,12 +31,21 @@ const ENEMY = {
     SHELL_SPEED: 120
 };
 
+const INVADER = {
+    SPEED: 40,
+    BOMB_DELAY_MIN: 3000,
+    BOMB_DELAY_MAX: 5000,
+    BOMB_SPEED: 150
+};
+
 const SCORE = {
     COIN: 200,
     GOOMBA: 100,
     KOOPA: 200,
     FLAG: 5000,
-    MUSHROOM: 1000
+    MUSHROOM: 1000,
+    INVADER: 500,
+    BOMB_DESTROY: 50
 };
 
 const MUSHROOM_CHANCE = 0.35;

@@ -25,7 +25,8 @@ class InputManager {
             left: this.p1.left.isDown,
             right: this.p1.right.isDown,
             jump: this.p1.jump.isDown,
-            jumpJustDown: Phaser.Input.Keyboard.JustDown(this.p1.jump)
+            jumpJustDown: Phaser.Input.Keyboard.JustDown(this.p1.jump),
+            shootJustDown: Phaser.Input.Keyboard.JustDown(this.p1.up)
         };
     }
 
@@ -34,7 +35,8 @@ class InputManager {
             left: this.p2.left.isDown,
             right: this.p2.right.isDown,
             jump: this.p2.jump.isDown || this.p2.jumpAlt.isDown,
-            jumpJustDown: Phaser.Input.Keyboard.JustDown(this.p2.jump) || Phaser.Input.Keyboard.JustDown(this.p2.jumpAlt)
+            jumpJustDown: Phaser.Input.Keyboard.JustDown(this.p2.jump) || Phaser.Input.Keyboard.JustDown(this.p2.jumpAlt),
+            shootJustDown: Phaser.Input.Keyboard.JustDown(this.p2.up)
         };
     }
 }

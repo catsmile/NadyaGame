@@ -284,6 +284,15 @@ class LevelData {
         ];
     }
 
+    static getInvaders() {
+        return [
+            { col: 40, row: 2 },
+            { col: 80, row: 3 },
+            { col: 130, row: 2 },
+            { col: 170, row: 3 }
+        ];
+    }
+
     static getDecorations() {
         return [
             { type: 'cloud', col: 8, row: 2 },

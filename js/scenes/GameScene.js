@@ -44,10 +44,15 @@ class GameScene extends Phaser.Scene {
         // Mushroom group
         this.mushrooms = this.physics.add.group();
 
+        // Invader groups
+        this.invaderBombs = this.physics.add.group({ allowGravity: false });
+        this.playerBullets = this.physics.add.group({ allowGravity: false });
+
         // Create entities
         this.createCoins();
         this.createEnemies();
         this.createPiranhaPlants();
+        this.createInvaders();
         this.createFlag();
 
         // Castle
@@ -211,6 +216,36 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    createInvaders() {
+        this.invaders = this.physics.add.group({ allowGravity: false });
+        const invaderData = LevelData.getInvaders();
+        invaderData.forEach(id => {
+            const invader = new Invader(this, id.col * TILE + TILE / 2, id.row * TILE + TILE / 2);
+            this.invaders.add(invader);
+            // Re-set after group.add resets body
+            invader.body.setAllowGravity(false);
+        });
+    }
+
+    spawnInvaderBomb(x, y) {
+        const bomb = this.physics.add.sprite(x, y, 'invader_bomb_0');
+        bomb.setSize(4, 8);
+        bomb.setDepth(8);
+        bomb.play('invader_bomb_flash');
+        this.invaderBombs.add(bomb);
+        // Set velocity AFTER adding to group (group.add resets body)
+        bomb.body.setAllowGravity(false);
+        bomb.setVelocityY(INVADER.BOMB_SPEED);
+    }
+
+    spawnPlayerBullet(player) {
+        const bullet = new PlayerBullet(this, player.x, player.y - 10);
+        this.playerBullets.add(bullet);
+        // Re-set velocity AFTER adding to group (group.add resets body)
+        bullet.body.setAllowGravity(false);
+        bullet.setVelocityY(-PLAYER.BULLET_SPEED);
+    }
+
     createFlag() {
         this.flag = new Flag(this, 200);
     }
@@ -279,6 +314,34 @@ class GameScene extends Phaser.Scene {
                 this.hitHiddenBlock(p, block);
             });
 
+            // Invader bomb hits player
+            this.physics.add.overlap(player, this.invaderBombs, (p, bomb) => {
+                if (!p.alive || p.invincible) return;
+                bomb.destroy();
+                p.die();
+                this.checkGameOver();
+            });
+
+            // Player vs invader: stomp from above = kill, else die
+            this.physics.add.overlap(player, this.invaders, (p, inv) => {
+                if (!p.alive || p.invincible || !inv.alive) return;
+                if (p.hasFire) {
+                    inv.die();
+                    this.addScore(SCORE.INVADER);
+                    this.showScorePopup(inv.x, inv.y, SCORE.INVADER);
+                    return;
+                }
+                if (p.body.velocity.y > 0 && p.body.bottom <= inv.body.top + 8) {
+                    inv.die();
+                    p.bounce();
+                    this.addScore(SCORE.INVADER);
+                    this.showScorePopup(inv.x, inv.y, SCORE.INVADER);
+                } else {
+                    p.die();
+                    this.checkGameOver();
+                }
+            });
+
             // Flag overlap
             this.physics.add.overlap(player, this.flag.parts, (p) => {
                 this.reachFlag(p);
@@ -315,6 +378,50 @@ class GameScene extends Phaser.Scene {
                 this.addScore(SCORE.KOOPA);
             }
         });
+
+        // Bombs hit ground/blocks -> destroy bomb
+        this.physics.add.collider(this.invaderBombs, this.groundLayer, (bomb) => { bomb.destroy(); });
+        this.physics.add.collider(this.invaderBombs, this.brickLayer, (bomb) => { bomb.destroy(); });
+        this.physics.add.collider(this.invaderBombs, this.pipeLayer, (bomb) => { bomb.destroy(); });
+        this.physics.add.collider(this.invaderBombs, this.questionLayer, (bomb) => { bomb.destroy(); });
+
+        // Bombs kill goombas/koopas
+        this.physics.add.overlap(this.invaderBombs, this.goombas, (bomb, goomba) => {
+            if (goomba.alive) {
+                goomba.stomped();
+                bomb.destroy();
+            }
+        });
+        this.physics.add.overlap(this.invaderBombs, this.koopas, (bomb, koopa) => {
+            if (koopa.active) {
+                koopa.destroy();
+                bomb.destroy();
+            }
+        });
+
+        // Player bullets hit invaders
+        this.physics.add.overlap(this.playerBullets, this.invaders, (bullet, inv) => {
+            if (!inv.alive) return;
+            inv.die();
+            bullet.destroy();
+            this.addScore(SCORE.INVADER);
+            this.showScorePopup(inv.x, inv.y, SCORE.INVADER);
+        });
+
+        // Player bullets hit bombs
+        this.physics.add.overlap(this.playerBullets, this.invaderBombs, (bullet, bomb) => {
+            const bx = bomb.x, by = bomb.y;
+            bullet.destroy();
+            bomb.destroy();
+            this.addScore(SCORE.BOMB_DESTROY);
+            this.showScorePopup(bx, by, SCORE.BOMB_DESTROY);
+        });
+
+        // Player bullets hit tiles -> destroy bullet
+        this.physics.add.collider(this.playerBullets, this.groundLayer, (bullet) => { bullet.destroy(); });
+        this.physics.add.collider(this.playerBullets, this.brickLayer, (bullet) => { bullet.destroy(); });
+        this.physics.add.collider(this.playerBullets, this.pipeLayer, (bullet) => { bullet.destroy(); });
+        this.physics.add.collider(this.playerBullets, this.questionLayer, (bullet) => { bullet.destroy(); });
     }
 
     hitBrick(player, brick) {
@@ -676,6 +783,21 @@ class GameScene extends Phaser.Scene {
         this.score += amount;
     }
 
+    showScorePopup(x, y, amount) {
+        const popup = this.add.text(x, y - 8, String(amount), {
+            fontSize: '7px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
+        }).setOrigin(0.5).setDepth(20);
+        this.tweens.add({
+            targets: popup,
+            y: popup.y - 20,
+            alpha: 0,
+            duration: 600,
+            onComplete: () => popup.destroy()
+        });
+    }
+
     tickTimer() {
         if (this.gameOver || this.levelComplete) return;
         this.gameTimer--;
@@ -791,12 +913,27 @@ class GameScene extends Phaser.Scene {
             }
         });
 
+        // Update invaders
+        this.invaders.getChildren().forEach(inv => {
+            if (inv.update) inv.update();
+        });
+
+        // Update player bullets
+        this.playerBullets.getChildren().forEach(b => {
+            if (b.update) b.update();
+        });
+
         // Remove off-screen shells and mushrooms
         this.shells.getChildren().forEach(s => {
             if (s.y > LEVEL_ROWS * TILE + 32) s.destroy();
         });
         this.mushrooms.getChildren().forEach(m => {
             if (m.y > LEVEL_ROWS * TILE + 32) m.destroy();
+        });
+
+        // Remove off-screen bombs and bullets
+        this.invaderBombs.getChildren().forEach(b => {
+            if (b.y > LEVEL_ROWS * TILE + 32) b.destroy();
         });
 
         // Animate ? blocks
