@@ -321,7 +321,7 @@ class GameScene extends Phaser.Scene {
         mush.setSize(14, 14);
         mush.mushroomType = isRed ? 'fire' : 'lowgrav';
         mush.body.setAllowGravity(true);
-        mush.setVelocityX(Phaser.Math.Between(0, 1) ? 40 : -40);
+        mush.setVelocityX(40);
         mush.setBounce(0.2);
         this.mushrooms.add(mush);
 
@@ -481,6 +481,51 @@ class GameScene extends Phaser.Scene {
         }
     }
 
+    screenGlitch() {
+        const cam = this.cameras.main;
+
+        // Rapid color flash
+        cam.flash(150, 255, 0, 0, true);
+
+        // Shake
+        cam.shake(400, 0.02, true);
+
+        // Glitch slices — horizontal offset bars
+        const slices = [];
+        for (let i = 0; i < 8; i++) {
+            const yy = Phaser.Math.Between(0, GAME_HEIGHT);
+            const h = Phaser.Math.Between(4, 20);
+            const slice = this.add.rectangle(
+                GAME_WIDTH / 2 + Phaser.Math.Between(-30, 30),
+                yy, GAME_WIDTH, h,
+                Phaser.Math.RND.pick([0xff0000, 0x00ff00, 0x0000ff, 0xffffff])
+            ).setAlpha(0.6).setDepth(100).setScrollFactor(0);
+            slices.push(slice);
+        }
+
+        // Horizontal offset jitter
+        let jitterCount = 0;
+        const jitterEvent = this.time.addEvent({
+            delay: 50,
+            repeat: 7,
+            callback: () => {
+                cam.setScroll(
+                    cam.scrollX + Phaser.Math.Between(-3, 3),
+                    cam.scrollY + Phaser.Math.Between(-1, 1)
+                );
+                // Shift slices
+                slices.forEach(s => {
+                    if (s.active) s.x += Phaser.Math.Between(-20, 20);
+                });
+            }
+        });
+
+        // Clean up
+        this.time.delayedCall(500, () => {
+            slices.forEach(s => { if (s.active) s.destroy(); });
+        });
+    }
+
     playerPiranhaCollision(player, plant) {
         if (!player.alive || player.invincible) return;
         if (plant.state === 'hidden') return;
@@ -618,11 +663,13 @@ class GameScene extends Phaser.Scene {
         if (this.player1.alive && this.player1.y > LEVEL_ROWS * TILE + 16) {
             this.player1.alive = false;
             this.player1.setVisible(false);
+            this.screenGlitch();
             this.checkGameOver();
         }
         if (this.player2.alive && this.player2.y > LEVEL_ROWS * TILE + 16) {
             this.player2.alive = false;
             this.player2.setVisible(false);
+            this.screenGlitch();
             this.checkGameOver();
         }
 

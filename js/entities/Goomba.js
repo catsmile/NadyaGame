@@ -9,7 +9,7 @@ class Goomba extends Phaser.Physics.Arcade.Sprite {
         this.setSize(14, 14);
         this.setOffset(1, 2);
         this.setDepth(5);
-        this.setVelocityX(-ENEMY.GOOMBA_SPEED);
+        this.setVelocityX((Math.random() < 0.5 ? -1 : 1) * ENEMY.GOOMBA_SPEED);
 
         this.play('goomba_walk');
     }

@@ -8,7 +8,9 @@ class Koopa extends Phaser.Physics.Arcade.Sprite {
         this.setSize(14, 14);
         this.setOffset(1, 2);
         this.setDepth(5);
-        this.setVelocityX(-ENEMY.KOOPA_SPEED);
+        const dir = Math.random() < 0.5 ? -1 : 1;
+        this.setVelocityX(dir * ENEMY.KOOPA_SPEED);
+        this.setFlipX(dir > 0);
 
         this.play('koopa_walk');
     }
