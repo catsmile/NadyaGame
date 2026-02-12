@@ -94,6 +94,7 @@ class GameScene extends Phaser.Scene {
         this.brickLayer = this.physics.add.staticGroup();
         this.questionLayer = this.physics.add.staticGroup();
         this.pipeLayer = this.physics.add.staticGroup();
+        this.hiddenLayer = this.physics.add.staticGroup();
 
         this.levelData = levelData;
 
@@ -131,9 +132,43 @@ class GameScene extends Phaser.Scene {
             }
         }
 
+        // Place hidden blocks in random empty spots
+        this.placeHiddenBlocks(levelData);
+
         // Animate ? blocks with texture swap
         this.qAnimTimer = 0;
         this.qAnimFrame = 0;
+    }
+
+    placeHiddenBlocks(levelData) {
+        // Rows 6-9 are good heights for hidden blocks (above ground, reachable by jump)
+        const candidates = [];
+        for (let c = 10; c < LEVEL_COLS - 15; c++) {
+            for (let r = 6; r <= 9; r++) {
+                // Must be empty, and have empty space below (so player can hit from underneath)
+                if (levelData[r][c] === TILES.EMPTY &&
+                    levelData[r + 1][c] === TILES.EMPTY &&
+                    levelData[r - 1][c] === TILES.EMPTY) {
+                    candidates.push({ r, c });
+                }
+            }
+        }
+
+        // Shuffle and pick a few
+        Phaser.Utils.Array.Shuffle(candidates);
+        const count = Math.min(6, candidates.length);
+
+        for (let i = 0; i < count; i++) {
+            const { r, c } = candidates[i];
+            const x = c * TILE + TILE / 2;
+            const y = r * TILE + TILE / 2;
+
+            const block = this.hiddenLayer.create(x, y, 'question_used');
+            block.setAlpha(0); // invisible
+            block.used = false;
+            block.tileCol = c;
+            block.tileRow = r;
+        }
     }
 
     createCoins() {
@@ -239,6 +274,11 @@ class GameScene extends Phaser.Scene {
                 });
             });
 
+            // Hidden block collision
+            this.physics.add.collider(player, this.hiddenLayer, (p, block) => {
+                this.hitHiddenBlock(p, block);
+            });
+
             // Flag overlap
             this.physics.add.overlap(player, this.flag.parts, (p) => {
                 this.reachFlag(p);
@@ -308,6 +348,27 @@ class GameScene extends Phaser.Scene {
             } else {
                 this.spawnBlockCoin(qblock.x, qblock.y - TILE);
             }
+        }
+    }
+
+    hitHiddenBlock(player, block) {
+        if (block.used) return;
+        if (player.body.blocked.up && player.y > block.y) {
+            block.used = true;
+            block.setAlpha(1);
+
+            // Bounce animation
+            this.tweens.add({
+                targets: block,
+                y: block.y - 4,
+                duration: 80,
+                yoyo: true,
+                onComplete: () => {
+                    block.refreshBody();
+                }
+            });
+
+            this.spawnBlockCoin(block.x, block.y - TILE);
         }
     }
 

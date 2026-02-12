@@ -7,6 +7,7 @@ class MenuScene extends Phaser.Scene {
         const cx = GAME_WIDTH / 2;
         const cy = GAME_HEIGHT / 2;
         this.selected = 0; // 0 = 1 player, 1 = 2 players
+        this.menuPipeX = 620;
 
         // Animated background — scrolling ground
         this.bgTiles = [];
@@ -33,6 +34,11 @@ class MenuScene extends Phaser.Scene {
             });
         }
 
+        // Decorative elements (behind text)
+        this.spawnMenuQuestionBlocks();
+        this.spawnMenuPipe();
+        this.spawnMenuEnemies();
+
         // Bouncing title
         const title1 = this.add.text(cx, cy - 220, 'NADYA & MARK', {
             fontSize: '30px',
@@ -40,7 +46,7 @@ class MenuScene extends Phaser.Scene {
             color: '#f83800',
             stroke: '#000000',
             strokeThickness: 4
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.tweens.add({
             targets: title1,
@@ -57,7 +63,7 @@ class MenuScene extends Phaser.Scene {
             color: '#f8b800',
             stroke: '#000000',
             strokeThickness: 3
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         // Rainbow shimmer on subtitle
         const subtitleColors = [0xf8b800, 0xff6600, 0xf83800, 0xff6600];
@@ -72,8 +78,8 @@ class MenuScene extends Phaser.Scene {
         });
 
         // Animated characters — walking in place
-        this.nadyaPreview = this.add.sprite(cx - 80, cy - 50, 'nadya_1').setScale(5);
-        this.markPreview = this.add.sprite(cx + 80, cy - 50, 'mark_1').setScale(5);
+        this.nadyaPreview = this.add.sprite(cx - 80, cy - 50, 'nadya_1').setScale(5).setDepth(10);
+        this.markPreview = this.add.sprite(cx + 80, cy - 50, 'mark_1').setScale(5).setDepth(10);
 
         // Bounce characters
         this.tweens.add({
@@ -110,17 +116,17 @@ class MenuScene extends Phaser.Scene {
             fontSize: '11px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#f83800'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.add.text(cx + 80, cy + 10, 'MARK', {
             fontSize: '11px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#3858a8'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         // Decorative coins
         for (let i = 0; i < 3; i++) {
-            const coin = this.add.sprite(cx - 40 + i * 40, cy + 45, 'coin_0').setScale(2);
+            const coin = this.add.sprite(cx - 40 + i * 40, cy + 45, 'coin_0').setScale(2).setDepth(10);
             this.tweens.add({
                 targets: coin,
                 y: coin.y - 4,
@@ -138,26 +144,26 @@ class MenuScene extends Phaser.Scene {
             fontSize: '10px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.option1 = this.add.text(cx, modeY + 18, '1 PLAYER', {
             fontSize: '14px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.option2 = this.add.text(cx, modeY + 50, '2 PLAYERS', {
             fontSize: '14px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         // Selection arrow
         this.arrow = this.add.text(cx - 110, modeY + 18, '\u25B6', {
             fontSize: '12px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#f8b800'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         // Arrow blink
         this.tweens.add({
@@ -178,7 +184,7 @@ class MenuScene extends Phaser.Scene {
             color: '#acecfc',
             lineSpacing: 6,
             align: 'center'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.updateControlsHint();
 
@@ -187,7 +193,7 @@ class MenuScene extends Phaser.Scene {
             fontSize: '10px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#50d848'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(10);
 
         this.tweens.add({
             targets: startText,
@@ -196,9 +202,6 @@ class MenuScene extends Phaser.Scene {
             yoyo: true,
             repeat: -1
         });
-
-        // Small enemies walking across the bottom
-        this.spawnMenuEnemies();
 
         // Input
         this.input.keyboard.on('keydown-UP', () => this.changeSelection(-1));
@@ -234,21 +237,20 @@ class MenuScene extends Phaser.Scene {
     }
 
     spawnMenuEnemies() {
-        const y = GAME_HEIGHT - 64;
+        const y = GAME_HEIGHT - 48;
+        const turnX = this.menuPipeX - 16; // stop before pipe
+
         for (let i = 0; i < 3; i++) {
-            const goomba = this.add.sprite(
-                Phaser.Math.Between(-50, -200),
-                y,
-                'goomba_0'
-            ).setScale(2);
+            const startX = -30 - i * 60;
+            const goomba = this.add.sprite(startX, y, 'goomba_0').setScale(2).setDepth(3);
 
             this.tweens.add({
                 targets: goomba,
-                x: GAME_WIDTH + 50,
-                duration: Phaser.Math.Between(6000, 10000),
+                x: turnX,
+                duration: Phaser.Math.Between(5000, 8000),
+                yoyo: true,
                 repeat: -1,
-                delay: i * 2500,
-                onRepeat: () => { goomba.x = -50; }
+                delay: i * 2500
             });
 
             // Swap walk frames
@@ -262,6 +264,81 @@ class MenuScene extends Phaser.Scene {
                 }
             });
         }
+    }
+
+    spawnMenuPipe() {
+        const pipeX = this.menuPipeX;
+        const groundY = GAME_HEIGHT - 32;
+        const pipeTopY = groundY - 64;
+
+        // Piranha plant (behind pipe, depth 1)
+        const piranha = this.add.sprite(pipeX + 32, groundY, 'piranha_0').setScale(2);
+        piranha.setOrigin(0.5, 1);
+        piranha.setDepth(1);
+
+        // Pipe tiles (in front of piranha, depth 5)
+        this.add.image(pipeX, pipeTopY, 'pipe_tl').setOrigin(0, 0).setScale(2).setDepth(5);
+        this.add.image(pipeX + 32, pipeTopY, 'pipe_tr').setOrigin(0, 0).setScale(2).setDepth(5);
+        this.add.image(pipeX, groundY - 32, 'pipe_bl').setOrigin(0, 0).setScale(2).setDepth(5);
+        this.add.image(pipeX + 32, groundY - 32, 'pipe_br').setOrigin(0, 0).setScale(2).setDepth(5);
+
+        // Animate piranha: start hidden inside pipe, rise to peek above
+        this.tweens.add({
+            targets: piranha,
+            y: pipeTopY - 8,
+            duration: 1000,
+            hold: 1500,
+            yoyo: true,
+            repeat: -1,
+            repeatDelay: 2000,
+            ease: 'Sine.easeInOut'
+        });
+
+        // Swap piranha frames
+        this.time.addEvent({
+            delay: 200,
+            loop: true,
+            callback: () => {
+                piranha.setTexture(
+                    piranha.texture.key === 'piranha_0' ? 'piranha_1' : 'piranha_0'
+                );
+            }
+        });
+    }
+
+    spawnMenuQuestionBlocks() {
+        const groundY = GAME_HEIGHT - 32;
+        const positions = [
+            { x: 100, y: groundY - 128 },
+            { x: 260, y: groundY - 96 },
+            { x: 500, y: groundY - 128 }
+        ];
+
+        positions.forEach((pos, i) => {
+            const qblock = this.add.sprite(pos.x, pos.y, 'question_0').setScale(2).setDepth(2);
+
+            // Animate texture
+            let frame = 0;
+            this.time.addEvent({
+                delay: 400,
+                loop: true,
+                callback: () => {
+                    frame = (frame + 1) % 4;
+                    qblock.setTexture('question_' + frame);
+                }
+            });
+
+            // Subtle float
+            this.tweens.add({
+                targets: qblock,
+                y: pos.y - 3,
+                duration: 600,
+                yoyo: true,
+                repeat: -1,
+                delay: i * 200,
+                ease: 'Sine.easeInOut'
+            });
+        });
     }
 
     startGame() {
