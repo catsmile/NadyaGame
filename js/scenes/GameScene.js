@@ -28,6 +28,9 @@ class GameScene extends Phaser.Scene {
         const mapWidth = LEVEL_COLS * TILE;
         this.cameraManager = new CameraManager(this, this.player1, this.player2, mapWidth);
 
+        // Mushroom group
+        this.mushrooms = this.physics.add.group();
+
         // Create entities
         this.createCoins();
         this.createEnemies();
@@ -286,8 +289,12 @@ class GameScene extends Phaser.Scene {
                 }
             });
 
-            // Spawn coin above
-            this.spawnBlockCoin(qblock.x, qblock.y - TILE);
+            // Random chance to spawn mushroom instead of coin
+            if (Math.random() < MUSHROOM_CHANCE) {
+                this.spawnMushroom(qblock.x, qblock.y - TILE);
+            } else {
+                this.spawnBlockCoin(qblock.x, qblock.y - TILE);
+            }
         }
     }
 
@@ -304,6 +311,66 @@ class GameScene extends Phaser.Scene {
         });
         this.addScore(SCORE.COIN);
         this.coinCount++;
+    }
+
+    spawnMushroom(x, y) {
+        const isRed = Math.random() < 0.5;
+        const key = isRed ? 'mushroom_red' : 'mushroom_blue';
+        const mush = this.physics.add.image(x, y, key);
+        mush.setDepth(5);
+        mush.setSize(14, 14);
+        mush.mushroomType = isRed ? 'fire' : 'lowgrav';
+        mush.body.setAllowGravity(true);
+        mush.setVelocityX(Phaser.Math.Between(0, 1) ? 40 : -40);
+        mush.setBounce(0.2);
+        this.mushrooms.add(mush);
+
+        // Collide with terrain
+        this.physics.add.collider(mush, this.groundLayer);
+        this.physics.add.collider(mush, this.brickLayer);
+        this.physics.add.collider(mush, this.pipeLayer);
+        this.physics.add.collider(mush, this.questionLayer);
+
+        // Pop-up effect
+        this.tweens.add({
+            targets: mush,
+            y: y - 12,
+            duration: 200,
+            ease: 'Back.easeOut'
+        });
+
+        // Overlap with players
+        [this.player1, this.player2].forEach(player => {
+            this.physics.add.overlap(player, mush, (p, m) => {
+                this.collectMushroom(p, m);
+            });
+        });
+    }
+
+    collectMushroom(player, mush) {
+        if (!mush.active || !player.alive) return;
+        mush.destroy();
+        this.addScore(SCORE.MUSHROOM);
+
+        if (mush.mushroomType === 'fire') {
+            player.applyFire();
+        } else {
+            player.applyLowGrav();
+        }
+
+        // Score popup
+        const popup = this.add.text(player.x, player.y - 12, String(SCORE.MUSHROOM), {
+            fontSize: '8px',
+            fontFamily: 'monospace',
+            color: '#fcfcfc'
+        }).setOrigin(0.5).setDepth(20);
+        this.tweens.add({
+            targets: popup,
+            y: popup.y - 20,
+            alpha: 0,
+            duration: 600,
+            onComplete: () => popup.destroy()
+        });
     }
 
     brickBreakEffect(x, y) {
@@ -337,6 +404,13 @@ class GameScene extends Phaser.Scene {
         if (!player.alive || player.invincible) return;
         if (!goomba.alive) return;
 
+        // Fire power-up: kill on any touch
+        if (player.hasFire) {
+            goomba.stomped();
+            this.addScore(SCORE.GOOMBA);
+            return;
+        }
+
         // Stomp check
         if (player.body.velocity.y > 0 && player.body.bottom <= goomba.body.top + 8) {
             goomba.stomped();
@@ -351,6 +425,13 @@ class GameScene extends Phaser.Scene {
     playerKoopaCollision(player, koopa) {
         if (!player.alive || player.invincible) return;
         if (!koopa.active) return;
+
+        // Fire power-up: kill on any touch
+        if (player.hasFire) {
+            this.addScore(SCORE.KOOPA);
+            koopa.destroy();
+            return;
+        }
 
         if (player.body.velocity.y > 0 && player.body.bottom <= koopa.body.top + 8) {
             player.bounce();
@@ -382,15 +463,14 @@ class GameScene extends Phaser.Scene {
     playerShellCollision(player, shell) {
         if (!player.alive || player.invincible) return;
 
-        if (!shell.moving) {
-            // Kick the shell
+        if (!shell.moving || player.hasFire) {
+            // Kick the shell (or fire player always kicks)
             const dir = player.x < shell.x ? 1 : -1;
             shell.setVelocityX(dir * ENEMY.SHELL_SPEED);
             shell.moving = true;
         } else {
             // Moving shell hurts
             if (player.body.velocity.y > 0 && player.body.bottom <= shell.body.top + 8) {
-                // Stomp stops the shell
                 shell.setVelocityX(0);
                 shell.moving = false;
                 player.bounce();
@@ -403,8 +483,15 @@ class GameScene extends Phaser.Scene {
 
     playerPiranhaCollision(player, plant) {
         if (!player.alive || player.invincible) return;
-        // Only hurt when plant is visible (not fully hidden)
         if (plant.state === 'hidden') return;
+
+        // Fire power-up kills piranha
+        if (player.hasFire) {
+            plant.destroy();
+            this.addScore(SCORE.GOOMBA);
+            return;
+        }
+
         player.die();
         this.checkGameOver();
     }
@@ -551,9 +638,35 @@ class GameScene extends Phaser.Scene {
         const alivePlayers = [this.player1, this.player2];
         this.piranhaPlants.forEach(p => p.update(alivePlayers));
 
-        // Remove off-screen shells
+        // Fire effect particles
+        [this.player1, this.player2].forEach(p => {
+            if (p.alive && p.hasFire) {
+                p.fireParticleTimer += delta;
+                if (p.fireParticleTimer > 120) {
+                    p.fireParticleTimer = 0;
+                    const spark = this.add.rectangle(
+                        p.x + Phaser.Math.Between(-6, 6),
+                        p.y + Phaser.Math.Between(-8, 4),
+                        2, 2,
+                        Phaser.Math.RND.pick([0xff6600, 0xff0000, 0xffcc00])
+                    ).setDepth(11);
+                    this.tweens.add({
+                        targets: spark,
+                        y: spark.y - 10,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => spark.destroy()
+                    });
+                }
+            }
+        });
+
+        // Remove off-screen shells and mushrooms
         this.shells.getChildren().forEach(s => {
             if (s.y > LEVEL_ROWS * TILE + 32) s.destroy();
+        });
+        this.mushrooms.getChildren().forEach(m => {
+            if (m.y > LEVEL_ROWS * TILE + 32) m.destroy();
         });
 
         // Animate ? blocks

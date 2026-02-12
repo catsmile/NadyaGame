@@ -8,6 +8,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.spawnX = x;
         this.spawnY = y;
 
+        // Double jump
+        this.jumpsLeft = PLAYER.MAX_JUMPS;
+
+        // Power-ups
+        this.hasFire = false;
+        this.hasLowGrav = false;
+        this.baseGravityY = GRAVITY;
+        this.fireTimer = null;
+        this.lowGravTimer = null;
+        this.fireParticleTimer = 0;
+
         scene.add.existing(this);
         scene.physics.add.existing(this);
 
@@ -22,6 +33,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         const onGround = this.body.blocked.down;
 
+        // Reset jumps when on ground
+        if (onGround) {
+            this.jumpsLeft = PLAYER.MAX_JUMPS;
+        }
+
         // Horizontal movement
         if (input.left) {
             this.setVelocityX(-PLAYER.SPEED);
@@ -33,9 +49,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             this.setVelocityX(0);
         }
 
-        // Jump
-        if (input.jumpJustDown && onGround) {
+        // Jump / double jump
+        if (input.jumpJustDown && this.jumpsLeft > 0) {
             this.setVelocityY(PLAYER.JUMP_VELOCITY);
+            this.jumpsLeft--;
         }
 
         // Variable jump height: cut jump short if button released
@@ -53,9 +70,63 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    applyFire() {
+        // Clear previous fire timer if any
+        if (this.fireTimer) this.fireTimer.remove(false);
+
+        this.hasFire = true;
+        this.setTint(0xff6600);
+
+        this.fireTimer = this.scene.time.delayedCall(PLAYER.FIRE_DURATION, () => {
+            this.clearFire();
+        });
+    }
+
+    clearFire() {
+        this.hasFire = false;
+        if (!this.hasLowGrav) {
+            this.clearTint();
+        } else {
+            this.setTint(0x60b0ff);
+        }
+        this.fireTimer = null;
+    }
+
+    applyLowGrav() {
+        if (this.lowGravTimer) this.lowGravTimer.remove(false);
+
+        this.hasLowGrav = true;
+        this.body.gravity.y = -GRAVITY * (1 - PLAYER.LOW_GRAV_FACTOR);
+        if (!this.hasFire) {
+            this.setTint(0x60b0ff);
+        }
+
+        this.lowGravTimer = this.scene.time.delayedCall(PLAYER.LOW_GRAV_DURATION, () => {
+            this.clearLowGrav();
+        });
+    }
+
+    clearLowGrav() {
+        this.hasLowGrav = false;
+        this.body.gravity.y = 0;
+        if (!this.hasFire) {
+            this.clearTint();
+        } else {
+            this.setTint(0xff6600);
+        }
+        this.lowGravTimer = null;
+    }
+
     die() {
         if (!this.alive || this.invincible) return;
         this.alive = false;
+        this.hasFire = false;
+        this.hasLowGrav = false;
+        this.body.gravity.y = 0;
+        this.clearTint();
+        if (this.fireTimer) { this.fireTimer.remove(false); this.fireTimer = null; }
+        if (this.lowGravTimer) { this.lowGravTimer.remove(false); this.lowGravTimer = null; }
+
         this.play(this.playerKey + '_dead');
         this.body.setAllowGravity(true);
         this.setVelocity(0, PLAYER.JUMP_VELOCITY);
@@ -76,6 +147,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setDepth(10);
         this.setAlpha(0.5);
         this.invincible = true;
+        this.jumpsLeft = PLAYER.MAX_JUMPS;
 
         this.scene.time.delayedCall(PLAYER.INVINCIBLE_TIME, () => {
             this.setAlpha(1);
@@ -85,9 +157,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     bounce() {
         this.setVelocityY(PLAYER.BOUNCE);
+        // Restore double jump after bouncing on enemy
+        this.jumpsLeft = PLAYER.MAX_JUMPS - 1;
     }
 
-    // NES-style flag sequence: grab pole → slide down → hop off → walk to castle
+    // NES-style flag sequence: grab pole -> slide down -> hop off -> walk to castle
     startFlagSlide(poleX, topY, bottomY, onComplete) {
         this.finished = true;
         this.body.setAllowGravity(false);

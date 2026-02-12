@@ -12,6 +12,7 @@ class SpriteGenerator {
         this.generateCoin();
         this.generateFlag();
         this.generatePiranhaPlant();
+        this.generateMushrooms();
         this.generateDecorations();
         this.generateCastle();
     }
@@ -514,6 +515,56 @@ class SpriteGenerator {
             frameRate: 3,
             repeat: -1
         });
+    }
+
+    // -- Mushrooms (red = fire, blue = low gravity) --
+    generateMushrooms() {
+        const g = this.scene.make.graphics({ add: false });
+
+        const types = [
+            { key: 'mushroom_red', cap: COLORS.MUSHROOM_RED, dark: COLORS.MUSHROOM_RED_DARK, spot: COLORS.MUSHROOM_RED_SPOT },
+            { key: 'mushroom_blue', cap: COLORS.MUSHROOM_BLUE, dark: COLORS.MUSHROOM_BLUE_DARK, spot: COLORS.MUSHROOM_BLUE_SPOT }
+        ];
+
+        types.forEach(t => {
+            g.clear();
+
+            // Cap
+            g.fillStyle(t.cap);
+            g.fillRect(2, 0, 12, 8);
+            g.fillRect(1, 2, 14, 6);
+            g.fillRect(0, 4, 16, 4);
+
+            // Dark underside of cap
+            g.fillStyle(t.dark);
+            g.fillRect(1, 7, 14, 1);
+
+            // Spots
+            g.fillStyle(t.spot);
+            g.fillRect(3, 1, 3, 3);
+            g.fillRect(10, 1, 3, 3);
+            g.fillRect(6, 3, 4, 2);
+
+            // Stem
+            g.fillStyle(COLORS.MUSHROOM_STEM);
+            g.fillRect(4, 8, 8, 6);
+            g.fillRect(3, 9, 10, 4);
+
+            // Stem shadow
+            g.fillStyle(COLORS.MUSHROOM_STEM_DARK);
+            g.fillRect(4, 13, 8, 1);
+            g.fillRect(3, 12, 1, 1);
+            g.fillRect(12, 12, 1, 1);
+
+            // Eyes
+            g.fillStyle(COLORS.BLACK);
+            g.fillRect(5, 9, 2, 2);
+            g.fillRect(9, 9, 2, 2);
+
+            g.generateTexture(t.key, 16, 16);
+        });
+
+        g.destroy();
     }
 
     // -- Decorations --
