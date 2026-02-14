@@ -143,7 +143,7 @@ const TILES = {
 const BOSS = {
     SPEED: 25,
     HEALTH: 3,
-    SPAWN_CHANCE: 1.0,
+    SPAWN_CHANCE: 0.3,
     SPAWN_COL: 110,
     SPAWN_ROW: 10
 };
