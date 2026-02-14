@@ -159,6 +159,12 @@ class MenuScene extends Phaser.Scene {
             color: '#fcfcfc'
         }).setOrigin(0.5).setDepth(10);
 
+        this.option3 = this.add.text(cx, modeY + 82, '2P NO HUNGER', {
+            fontSize: '14px',
+            fontFamily: FONT, padding: FONT_PAD,
+            color: '#fcfcfc'
+        }).setOrigin(0.5).setDepth(10);
+
         // Selection arrow
         this.arrow = this.add.text(cx - 110, modeY + 18, '\u25B6', {
             fontSize: '12px',
@@ -215,7 +221,7 @@ class MenuScene extends Phaser.Scene {
     }
 
     changeSelection(dir) {
-        this.selected = Phaser.Math.Clamp(this.selected + dir, 0, 1);
+        this.selected = Phaser.Math.Clamp(this.selected + dir, 0, 2);
         this.updateSelection();
         this.updateControlsHint();
     }
@@ -225,6 +231,7 @@ class MenuScene extends Phaser.Scene {
         this.arrow.y = modeY + 18 + this.selected * 32;
         this.option1.setColor(this.selected === 0 ? '#f8b800' : '#888888');
         this.option2.setColor(this.selected === 1 ? '#f8b800' : '#888888');
+        this.option3.setColor(this.selected === 2 ? '#f8b800' : '#888888');
     }
 
     updateControlsHint() {
@@ -232,9 +239,13 @@ class MenuScene extends Phaser.Scene {
             this.controlsText.setText(
                 'AD: Move  SPACE: Jump  W: Shoot\nE: Place Block  Q: Break Block\nHunt Goombas for Food!'
             );
-        } else {
+        } else if (this.selected === 1) {
             this.controlsText.setText(
                 'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break\nHunt Goombas for Food!'
+            );
+        } else {
+            this.controlsText.setText(
+                'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break\nRelaxed mode - no hunger!'
             );
         }
     }
@@ -479,6 +490,11 @@ class MenuScene extends Phaser.Scene {
     }
 
     startGame() {
-        this.scene.start('GameScene', { playerCount: this.selected + 1 });
+        const modes = [
+            { playerCount: 1, noHunger: false },
+            { playerCount: 2, noHunger: false },
+            { playerCount: 2, noHunger: true }
+        ];
+        this.scene.start('GameScene', modes[this.selected]);
     }
 }

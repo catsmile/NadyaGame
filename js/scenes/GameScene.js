@@ -5,6 +5,7 @@ class GameScene extends Phaser.Scene {
 
     init(data) {
         this.playerCount = (data && data.playerCount) || 2;
+        this.noHunger = (data && data.noHunger) || false;
     }
 
     create() {
@@ -510,8 +511,12 @@ class GameScene extends Phaser.Scene {
                 }
             });
 
-            // Always spawn red mushroom (fire power-up)
-            this.spawnMushroom(qblock.x, qblock.y - TILE);
+            // Random chance to spawn mushroom instead of coin
+            if (Math.random() < MUSHROOM_CHANCE) {
+                this.spawnMushroom(qblock.x, qblock.y - TILE);
+            } else {
+                this.spawnBlockCoin(qblock.x, qblock.y - TILE);
+            }
         }
     }
 
@@ -552,11 +557,12 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnMushroom(x, y) {
-        // Always red mushroom (fire power-up)
-        const mush = this.physics.add.image(x, y, 'mushroom_red');
+        const isRed = Math.random() < 0.5;
+        const key = isRed ? 'mushroom_red' : 'mushroom_blue';
+        const mush = this.physics.add.image(x, y, key);
         mush.setDepth(5);
         mush.setSize(14, 14);
-        mush.mushroomType = 'fire';
+        mush.mushroomType = isRed ? 'fire' : 'lowgrav';
         mush.body.setAllowGravity(true);
         mush.setVelocityX(40);
         mush.setBounce(0.2);
@@ -1022,9 +1028,11 @@ class GameScene extends Phaser.Scene {
         }
 
         // Hunger
-        this.player1.updateHunger(delta);
-        if (this.playerCount >= 2) {
-            this.player2.updateHunger(delta);
+        if (!this.noHunger) {
+            this.player1.updateHunger(delta);
+            if (this.playerCount >= 2) {
+                this.player2.updateHunger(delta);
+            }
         }
 
         // Camera
