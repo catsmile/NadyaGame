@@ -138,36 +138,30 @@ class MenuScene extends Phaser.Scene {
             });
         }
 
-        // Mode selection
-        const modeY = cy + 100;
+        // Mode selection — at the top so it's always visible
+        const modeY = 20;
+        this.modeLineHeight = 24;
 
-        this.add.text(cx, modeY - 15, 'SELECT MODE', {
+        // Dark background panel behind mode selection
+        this.add.rectangle(cx, modeY + 60, 340, 130, 0x000000, 0.6).setDepth(9);
+
+        this.add.text(cx, modeY + 10, 'SELECT MODE', {
             fontSize: '10px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#fcfcfc'
         }).setOrigin(0.5).setDepth(10);
 
-        this.option1 = this.add.text(cx, modeY + 18, '1 PLAYER', {
-            fontSize: '14px',
-            fontFamily: FONT, padding: FONT_PAD,
-            color: '#fcfcfc'
-        }).setOrigin(0.5).setDepth(10);
+        const optStyle = { fontSize: '11px', fontFamily: FONT, padding: FONT_PAD, color: '#fcfcfc' };
+        this.options = [];
 
-        this.option2 = this.add.text(cx, modeY + 50, '2 PLAYERS', {
-            fontSize: '14px',
-            fontFamily: FONT, padding: FONT_PAD,
-            color: '#fcfcfc'
-        }).setOrigin(0.5).setDepth(10);
-
-        this.option3 = this.add.text(cx, modeY + 82, '2P NO HUNGER', {
-            fontSize: '14px',
-            fontFamily: FONT, padding: FONT_PAD,
-            color: '#fcfcfc'
-        }).setOrigin(0.5).setDepth(10);
+        this.options[0] = this.add.text(cx, modeY + 34, '1 PLAYER', optStyle).setOrigin(0.5).setDepth(10);
+        this.options[1] = this.add.text(cx, modeY + 34 + this.modeLineHeight, '1P NO HUNGER', optStyle).setOrigin(0.5).setDepth(10);
+        this.options[2] = this.add.text(cx, modeY + 34 + this.modeLineHeight * 2, '2 PLAYERS', optStyle).setOrigin(0.5).setDepth(10);
+        this.options[3] = this.add.text(cx, modeY + 34 + this.modeLineHeight * 3, '2P NO HUNGER', optStyle).setOrigin(0.5).setDepth(10);
 
         // Selection arrow
-        this.arrow = this.add.text(cx - 110, modeY + 18, '\u25B6', {
-            fontSize: '12px',
+        this.arrow = this.add.text(cx - 110, modeY + 34, '\u25B6', {
+            fontSize: '10px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#f8b800'
         }).setOrigin(0.5).setDepth(10);
@@ -184,7 +178,7 @@ class MenuScene extends Phaser.Scene {
         this.updateSelection();
 
         // Controls hint
-        const ctrlY = cy + 170;
+        const ctrlY = cy + 100;
         this.controlsText = this.add.text(cx, ctrlY, '', {
             fontSize: '7px',
             fontFamily: FONT, padding: FONT_PAD,
@@ -196,7 +190,7 @@ class MenuScene extends Phaser.Scene {
         this.updateControlsHint();
 
         // Start prompt
-        const startText = this.add.text(cx, cy + 260, 'PRESS ENTER OR SPACE', {
+        const startText = this.add.text(cx, cy + 180, 'PRESS ENTER OR SPACE', {
             fontSize: '10px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#50d848'
@@ -221,31 +215,31 @@ class MenuScene extends Phaser.Scene {
     }
 
     changeSelection(dir) {
-        this.selected = Phaser.Math.Clamp(this.selected + dir, 0, 2);
+        this.selected = Phaser.Math.Clamp(this.selected + dir, 0, 3);
         this.updateSelection();
         this.updateControlsHint();
     }
 
     updateSelection() {
-        const modeY = GAME_HEIGHT / 2 + 100;
-        this.arrow.y = modeY + 18 + this.selected * 32;
-        this.option1.setColor(this.selected === 0 ? '#f8b800' : '#888888');
-        this.option2.setColor(this.selected === 1 ? '#f8b800' : '#888888');
-        this.option3.setColor(this.selected === 2 ? '#f8b800' : '#888888');
+        const modeY = 20;
+        this.arrow.y = modeY + 34 + this.selected * this.modeLineHeight;
+        this.options.forEach((opt, i) => {
+            opt.setColor(this.selected === i ? '#f8b800' : '#888888');
+        });
     }
 
     updateControlsHint() {
-        if (this.selected === 0) {
+        const is1P = this.selected <= 1;
+        const noHunger = this.selected === 1 || this.selected === 3;
+        if (is1P) {
             this.controlsText.setText(
-                'AD: Move  SPACE: Jump  W: Shoot\nE: Place Block  Q: Break Block\nHunt Goombas for Food!'
-            );
-        } else if (this.selected === 1) {
-            this.controlsText.setText(
-                'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break\nHunt Goombas for Food!'
+                'AD: Move  SPACE: Jump  W: Shoot\nE: Place Block  Q: Break Block' +
+                (noHunger ? '\nRelaxed mode - no hunger!' : '\nHunt Goombas for Food!')
             );
         } else {
             this.controlsText.setText(
-                'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break\nRelaxed mode - no hunger!'
+                'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break' +
+                (noHunger ? '\nRelaxed mode - no hunger!' : '\nHunt Goombas for Food!')
             );
         }
     }
@@ -492,6 +486,7 @@ class MenuScene extends Phaser.Scene {
     startGame() {
         const modes = [
             { playerCount: 1, noHunger: false },
+            { playerCount: 1, noHunger: true },
             { playerCount: 2, noHunger: false },
             { playerCount: 2, noHunger: true }
         ];
