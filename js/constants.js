@@ -45,7 +45,8 @@ const SCORE = {
     FLAG: 5000,
     MUSHROOM: 1000,
     INVADER: 500,
-    BOMB_DESTROY: 50
+    BOMB_DESTROY: 50,
+    BOSS: 5000
 };
 
 const MUSHROOM_CHANCE = 0.35;
@@ -107,6 +108,12 @@ const COLORS = {
     CASTLE_GREY: 0xb8b8b8,
     CASTLE_DARK: 0x686868,
 
+    BOSS_BODY: 0x8b1a1a,
+    BOSS_DARK: 0x5c0e0e,
+    BOSS_HORN: 0xf0a020,
+    BOSS_BELLY: 0xf0d0a0,
+    BOSS_EYE: 0xff3030,
+
     CLOUD_WHITE: 0xfcfcfc,
     CLOUD_LIGHT: 0xacecfc,
     BUSH_GREEN: 0x00a800,
@@ -131,6 +138,21 @@ const TILES = {
     INVISIBLE: 9,
     GROUND_TOP: 10,
     CASTLE: 11
+};
+
+const BOSS = {
+    SPEED: 25,
+    HEALTH: 3,
+    SPAWN_CHANCE: 1.0,
+    SPAWN_COL: 110,
+    SPAWN_ROW: 10
+};
+
+const HUNGER = {
+    MAX: 100,
+    DRAIN_RATE: 2,         // per second
+    GOOMBA_FOOD: 30,
+    DAMAGE_THRESHOLD: 0    // die at 0
 };
 
 const PIRANHA = {

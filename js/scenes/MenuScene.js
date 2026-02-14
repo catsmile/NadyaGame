@@ -178,12 +178,12 @@ class MenuScene extends Phaser.Scene {
         this.updateSelection();
 
         // Controls hint
-        const ctrlY = cy + 185;
+        const ctrlY = cy + 170;
         this.controlsText = this.add.text(cx, ctrlY, '', {
-            fontSize: '8px',
+            fontSize: '7px',
             fontFamily: FONT, padding: FONT_PAD,
             color: '#acecfc',
-            lineSpacing: 6,
+            lineSpacing: 5,
             align: 'center'
         }).setOrigin(0.5).setDepth(10);
 
@@ -229,10 +229,12 @@ class MenuScene extends Phaser.Scene {
 
     updateControlsHint() {
         if (this.selected === 0) {
-            this.controlsText.setText('AD: Move  SPACE: Jump  W: Shoot');
+            this.controlsText.setText(
+                'AD: Move  SPACE: Jump  W: Shoot\nE: Place Block  Q: Break Block\nHunt Goombas for Food!'
+            );
         } else {
             this.controlsText.setText(
-                'P1 (Nadya): AD+SPACE  W: Shoot\nP2 (Mark): Arrows+Numpad0  UP: Shoot'
+                'P1: AD+SPACE  W:Shoot  E:Place  Q:Break\nP2: Arrows+Num0  UP:Shoot  Num1:Place  Num3:Break\nHunt Goombas for Food!'
             );
         }
     }

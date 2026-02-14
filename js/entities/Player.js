@@ -11,6 +11,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // Double jump
         this.jumpsLeft = PLAYER.MAX_JUMPS;
 
+        // Hunger
+        this.hunger = HUNGER.MAX;
+        this.hungerTimer = 0;
+
         // Power-ups
         this.hasFire = false;
         this.hasLowGrav = false;
@@ -70,6 +74,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             if (this.scene.spawnPlayerBullet) {
                 this.scene.spawnPlayerBullet(this);
             }
+        }
+
+        // Block place/remove
+        if (input.placeJustDown && this.scene.placeBlock) {
+            this.scene.placeBlock(this);
+        }
+        if (input.removeJustDown && this.scene.removeBlock) {
+            this.scene.removeBlock(this);
         }
 
         // Animations
@@ -170,6 +182,23 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             this.setAlpha(1);
             this.invincible = false;
         });
+    }
+
+    updateHunger(delta) {
+        if (!this.alive) return;
+        this.hungerTimer += delta;
+        if (this.hungerTimer >= 1000) {
+            this.hungerTimer -= 1000;
+            this.hunger = Math.max(0, this.hunger - HUNGER.DRAIN_RATE);
+            if (this.hunger <= 0) {
+                this.die();
+                if (this.scene.checkGameOver) this.scene.checkGameOver();
+            }
+        }
+    }
+
+    feed(amount) {
+        this.hunger = Math.min(HUNGER.MAX, this.hunger + amount);
     }
 
     bounce() {

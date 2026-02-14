@@ -44,6 +44,9 @@ class GameScene extends Phaser.Scene {
         // Mushroom group
         this.mushrooms = this.physics.add.group();
 
+        // Food group (dropped by goombas)
+        this.foodItems = this.physics.add.group();
+
         // Invader groups
         this.invaderBombs = this.physics.add.group({ allowGravity: false });
         this.playerBullets = this.physics.add.group({ allowGravity: false });
@@ -53,6 +56,7 @@ class GameScene extends Phaser.Scene {
         this.createEnemies();
         this.createPiranhaPlants();
         this.createInvaders();
+        this.createBoss();
         this.createFlag();
 
         // Castle
@@ -225,6 +229,15 @@ class GameScene extends Phaser.Scene {
             // Re-set after group.add resets body
             invader.body.setAllowGravity(false);
         });
+    }
+
+    createBoss() {
+        this.boss = null;
+        if (Math.random() < BOSS.SPAWN_CHANCE) {
+            const x = BOSS.SPAWN_COL * TILE + TILE / 2;
+            const y = BOSS.SPAWN_ROW * TILE + TILE / 2;
+            this.boss = new Boss(this, x, y);
+        }
     }
 
     spawnInvaderBomb(x, y) {
@@ -422,6 +435,53 @@ class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.playerBullets, this.brickLayer, (bullet) => { bullet.destroy(); });
         this.physics.add.collider(this.playerBullets, this.pipeLayer, (bullet) => { bullet.destroy(); });
         this.physics.add.collider(this.playerBullets, this.questionLayer, (bullet) => { bullet.destroy(); });
+
+        // Boss collisions
+        if (this.boss) {
+            // Boss walks on terrain
+            this.physics.add.collider(this.boss, this.groundLayer);
+            this.physics.add.collider(this.boss, this.brickLayer);
+            this.physics.add.collider(this.boss, this.pipeLayer);
+            this.physics.add.collider(this.boss, this.questionLayer);
+
+            // Boss vs Players
+            players.forEach(player => {
+                this.physics.add.overlap(player, this.boss, (p, boss) => {
+                    if (!p.alive || p.invincible || !boss.alive) return;
+                    if (p.hasFire) {
+                        boss.takeHit();
+                    } else {
+                        p.die();
+                        this.checkGameOver();
+                    }
+                });
+            });
+
+            // Boss kills goombas
+            this.physics.add.overlap(this.boss, this.goombas, (boss, goomba) => {
+                if (!boss.alive || !goomba.alive) return;
+                goomba.stomped();
+            });
+
+            // Boss kills koopas
+            this.physics.add.overlap(this.boss, this.koopas, (boss, koopa) => {
+                if (!boss.alive || !koopa.active) return;
+                koopa.destroy();
+            });
+
+            // Boss kills invaders
+            this.physics.add.overlap(this.boss, this.invaders, (boss, inv) => {
+                if (!boss.alive || !inv.alive) return;
+                inv.die();
+            });
+
+            // Boss destroys shells
+            this.physics.add.overlap(this.boss, this.shells, (boss, shell) => {
+                if (!boss.alive) return;
+                shell.destroy();
+            });
+
+        }
     }
 
     hitBrick(player, brick) {
@@ -437,6 +497,7 @@ class GameScene extends Phaser.Scene {
         if (player.body.blocked.up && player.y > qblock.y) {
             qblock.used = true;
             qblock.setTexture('question_used');
+            this.levelData[qblock.tileRow][qblock.tileCol] = TILES.QUESTION_USED;
 
             // Bounce animation
             this.tweens.add({
@@ -449,12 +510,8 @@ class GameScene extends Phaser.Scene {
                 }
             });
 
-            // Random chance to spawn mushroom instead of coin
-            if (Math.random() < MUSHROOM_CHANCE) {
-                this.spawnMushroom(qblock.x, qblock.y - TILE);
-            } else {
-                this.spawnBlockCoin(qblock.x, qblock.y - TILE);
-            }
+            // Always spawn red mushroom (fire power-up)
+            this.spawnMushroom(qblock.x, qblock.y - TILE);
         }
     }
 
@@ -495,12 +552,11 @@ class GameScene extends Phaser.Scene {
     }
 
     spawnMushroom(x, y) {
-        const isRed = Math.random() < 0.5;
-        const key = isRed ? 'mushroom_red' : 'mushroom_blue';
-        const mush = this.physics.add.image(x, y, key);
+        // Always red mushroom (fire power-up)
+        const mush = this.physics.add.image(x, y, 'mushroom_red');
         mush.setDepth(5);
         mush.setSize(14, 14);
-        mush.mushroomType = isRed ? 'fire' : 'lowgrav';
+        mush.mushroomType = 'fire';
         mush.body.setAllowGravity(true);
         mush.setVelocityX(40);
         mush.setBounce(0.2);
@@ -554,6 +610,109 @@ class GameScene extends Phaser.Scene {
         });
     }
 
+    placeBlock(player) {
+        if (!player.alive) return;
+        // Place block in the direction player is facing, at feet level
+        const dir = player.flipX ? -1 : 1;
+        const col = Math.floor((player.x + dir * TILE) / TILE);
+        const row = Math.floor(player.y / TILE);
+
+        // Bounds check
+        if (col < 0 || col >= LEVEL_COLS || row < 0 || row >= LEVEL_ROWS) return;
+
+        // Only place in empty space
+        if (this.levelData[row][col] !== TILES.EMPTY) return;
+
+        // Update level data
+        this.levelData[row][col] = TILES.BRICK;
+
+        // Create the brick sprite
+        const x = col * TILE + TILE / 2;
+        const y2 = row * TILE + TILE / 2;
+        const brick = this.brickLayer.create(x, y2, 'brick');
+        brick.tileCol = col;
+        brick.tileRow = row;
+        brick.refreshBody();
+    }
+
+    removeBlock(player) {
+        if (!player.alive) return;
+        // Remove block in the direction player is facing, at feet level
+        const dir = player.flipX ? -1 : 1;
+        const col = Math.floor((player.x + dir * TILE) / TILE);
+        const row = Math.floor(player.y / TILE);
+
+        if (col < 0 || col >= LEVEL_COLS || row < 0 || row >= LEVEL_ROWS) return;
+
+        const tile = this.levelData[row][col];
+        // Can only remove bricks and used question blocks
+        if (tile !== TILES.BRICK && tile !== TILES.QUESTION_USED) return;
+
+        this.levelData[row][col] = TILES.EMPTY;
+
+        // Find and destroy the matching sprite
+        const targetX = col * TILE + TILE / 2;
+        const targetY = row * TILE + TILE / 2;
+
+        const layers = [this.brickLayer, this.questionLayer];
+        for (const layer of layers) {
+            const children = layer.getChildren();
+            for (let i = children.length - 1; i >= 0; i--) {
+                const child = children[i];
+                if (child.tileCol === col && child.tileRow === row) {
+                    this.brickBreakEffect(child.x, child.y);
+                    child.destroy();
+                    return;
+                }
+            }
+        }
+    }
+
+    spawnFood(x, y) {
+        const food = this.physics.add.image(x, y - 8, 'food');
+        food.setDepth(5);
+        food.setSize(14, 8);
+        food.body.setAllowGravity(true);
+        food.setBounce(0.3);
+        this.foodItems.add(food);
+
+        // Pop up
+        food.setVelocityY(-120);
+        food.setVelocityX(Phaser.Math.Between(-30, 30));
+
+        // Collide with terrain
+        this.physics.add.collider(food, this.groundLayer);
+        this.physics.add.collider(food, this.brickLayer);
+        this.physics.add.collider(food, this.pipeLayer);
+
+        // Overlap with players
+        [this.player1, this.player2].forEach(player => {
+            this.physics.add.overlap(player, food, (p, f) => {
+                if (!f.active || !p.alive) return;
+                p.feed(HUNGER.GOOMBA_FOOD);
+                f.destroy();
+                // Popup
+                const popup = this.add.text(p.x, p.y - 12, '+' + HUNGER.GOOMBA_FOOD, {
+                    fontSize: '7px',
+                    fontFamily: FONT, padding: FONT_PAD,
+                    color: '#00ff00'
+                }).setOrigin(0.5).setDepth(20);
+                this.tweens.add({
+                    targets: popup,
+                    y: popup.y - 16,
+                    alpha: 0,
+                    duration: 500,
+                    onComplete: () => popup.destroy()
+                });
+            });
+        });
+
+        // Despawn after 10 seconds
+        this.time.delayedCall(10000, () => {
+            if (food.active) food.destroy();
+        });
+    }
+
     brickBreakEffect(x, y) {
         for (let i = 0; i < 4; i++) {
             const piece = this.add.rectangle(
@@ -587,6 +746,7 @@ class GameScene extends Phaser.Scene {
 
         // Fire power-up: kill on any touch
         if (player.hasFire) {
+            this.spawnFood(goomba.x, goomba.y);
             goomba.stomped();
             this.addScore(SCORE.GOOMBA);
             return;
@@ -594,6 +754,7 @@ class GameScene extends Phaser.Scene {
 
         // Stomp check
         if (player.body.velocity.y > 0 && player.body.bottom <= goomba.body.top + 8) {
+            this.spawnFood(goomba.x, goomba.y);
             goomba.stomped();
             player.bounce();
             this.addScore(SCORE.GOOMBA);
@@ -860,6 +1021,12 @@ class GameScene extends Phaser.Scene {
             this.player2.handleInput(p2Input);
         }
 
+        // Hunger
+        this.player1.updateHunger(delta);
+        if (this.playerCount >= 2) {
+            this.player2.updateHunger(delta);
+        }
+
         // Camera
         this.cameraManager.update();
 
@@ -875,6 +1042,17 @@ class GameScene extends Phaser.Scene {
             this.player2.setVisible(false);
             this.screenGlitch();
             this.checkGameOver();
+        }
+
+        // Update boss
+        if (this.boss && this.boss.active) {
+            this.boss.update();
+            // Cleanup if fell off screen
+            if (this.boss.y > LEVEL_ROWS * TILE + 48) {
+                this.boss.alive = false;
+                this.boss.destroy();
+                this.boss = null;
+            }
         }
 
         // Update enemies
@@ -929,6 +1107,9 @@ class GameScene extends Phaser.Scene {
         });
         this.mushrooms.getChildren().forEach(m => {
             if (m.y > LEVEL_ROWS * TILE + 32) m.destroy();
+        });
+        this.foodItems.getChildren().forEach(f => {
+            if (f.y > LEVEL_ROWS * TILE + 32) f.destroy();
         });
 
         // Remove off-screen bombs and bullets

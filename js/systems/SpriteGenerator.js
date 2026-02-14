@@ -18,6 +18,8 @@ class SpriteGenerator {
         this.generateInvader();
         this.generateInvaderBomb();
         this.generatePlayerBullet();
+        this.generateBoss();
+        this.generateFood();
     }
 
     // -- Tiles --
@@ -734,6 +736,195 @@ class SpriteGenerator {
             frameRate: 8,
             repeat: -1
         });
+    }
+
+    // -- Boss (48x48, Bowser-like, 3 frames: walk1, walk2, hurt) --
+    generateBoss() {
+        const g = this.scene.make.graphics({ add: false });
+        const W = 48, H = 48;
+
+        for (let f = 0; f < 3; f++) {
+            g.clear();
+
+            const bodyColor = f === 2 ? 0xff4444 : COLORS.BOSS_BODY;
+            const darkColor = f === 2 ? 0xcc2222 : COLORS.BOSS_DARK;
+
+            // Shell (spiky back)
+            g.fillStyle(0x2a8a2a);
+            g.fillRect(8, 6, 32, 24);
+            g.fillRect(6, 10, 36, 18);
+            // Shell dark outline
+            g.fillStyle(0x1a5a1a);
+            g.fillRect(8, 6, 32, 2);
+            g.fillRect(6, 10, 2, 18);
+            g.fillRect(40, 10, 2, 18);
+            // Shell spikes
+            g.fillStyle(COLORS.BOSS_HORN);
+            g.fillRect(12, 2, 6, 6);
+            g.fillRect(22, 0, 6, 8);
+            g.fillRect(32, 2, 6, 6);
+            g.fillStyle(0xd08010);
+            g.fillRect(14, 2, 2, 4);
+            g.fillRect(24, 0, 2, 6);
+            g.fillRect(34, 2, 2, 4);
+
+            // Body
+            g.fillStyle(bodyColor);
+            g.fillRect(4, 18, 40, 18);
+            g.fillRect(2, 22, 44, 12);
+
+            // Belly
+            g.fillStyle(COLORS.BOSS_BELLY);
+            g.fillRect(14, 22, 20, 12);
+            g.fillRect(16, 20, 16, 14);
+            // Belly lines
+            g.fillStyle(0xd0b080);
+            g.fillRect(16, 25, 16, 1);
+            g.fillRect(16, 29, 16, 1);
+
+            // Head
+            g.fillStyle(bodyColor);
+            g.fillRect(2, 10, 14, 14);
+            g.fillRect(0, 14, 16, 10);
+
+            // Snout
+            g.fillStyle(COLORS.BOSS_BELLY);
+            g.fillRect(0, 18, 8, 6);
+            g.fillRect(2, 16, 6, 2);
+
+            // Eyes
+            g.fillStyle(COLORS.WHITE);
+            g.fillRect(4, 12, 4, 4);
+            g.fillRect(10, 12, 4, 4);
+            g.fillStyle(COLORS.BOSS_EYE);
+            g.fillRect(6, 13, 2, 3);
+            g.fillRect(12, 13, 2, 3);
+            // Angry eyebrows
+            g.fillStyle(COLORS.BLACK);
+            g.fillRect(3, 11, 5, 2);
+            g.fillRect(10, 11, 5, 2);
+            g.fillRect(5, 10, 3, 1);
+            g.fillRect(10, 10, 3, 1);
+
+            // Mouth
+            g.fillStyle(COLORS.BLACK);
+            g.fillRect(2, 22, 6, 2);
+            g.fillStyle(COLORS.WHITE);
+            g.fillRect(3, 22, 1, 1);
+            g.fillRect(5, 22, 1, 1);
+            g.fillRect(7, 22, 1, 1);
+
+            // Horns
+            g.fillStyle(COLORS.BOSS_HORN);
+            g.fillRect(2, 6, 4, 6);
+            g.fillRect(0, 4, 4, 4);
+            g.fillRect(12, 6, 4, 6);
+            g.fillRect(12, 4, 4, 4);
+
+            // Arms
+            g.fillStyle(bodyColor);
+            if (f === 0) {
+                g.fillRect(0, 28, 6, 8);
+                g.fillRect(42, 28, 6, 8);
+            } else {
+                g.fillRect(0, 26, 6, 8);
+                g.fillRect(42, 26, 6, 8);
+            }
+            // Claws
+            g.fillStyle(COLORS.WHITE);
+            if (f === 0) {
+                g.fillRect(0, 34, 2, 2);
+                g.fillRect(3, 34, 2, 2);
+                g.fillRect(44, 34, 2, 2);
+                g.fillRect(46, 34, 2, 2);
+            } else {
+                g.fillRect(0, 32, 2, 2);
+                g.fillRect(3, 32, 2, 2);
+                g.fillRect(44, 32, 2, 2);
+                g.fillRect(46, 32, 2, 2);
+            }
+
+            // Legs/feet
+            g.fillStyle(darkColor);
+            if (f === 0) {
+                g.fillRect(8, 34, 10, 8);
+                g.fillRect(30, 34, 10, 8);
+                g.fillRect(6, 40, 12, 6);
+                g.fillRect(28, 40, 12, 6);
+            } else if (f === 1) {
+                g.fillRect(10, 34, 10, 8);
+                g.fillRect(28, 34, 10, 8);
+                g.fillRect(8, 40, 12, 6);
+                g.fillRect(26, 40, 12, 6);
+            } else {
+                g.fillRect(8, 34, 10, 8);
+                g.fillRect(30, 34, 10, 8);
+                g.fillRect(6, 40, 12, 6);
+                g.fillRect(28, 40, 12, 6);
+            }
+
+            // Toe claws
+            g.fillStyle(COLORS.WHITE);
+            if (f === 0) {
+                g.fillRect(6, 44, 2, 2);
+                g.fillRect(10, 44, 2, 2);
+                g.fillRect(28, 44, 2, 2);
+                g.fillRect(32, 44, 2, 2);
+            } else if (f === 1) {
+                g.fillRect(8, 44, 2, 2);
+                g.fillRect(12, 44, 2, 2);
+                g.fillRect(26, 44, 2, 2);
+                g.fillRect(30, 44, 2, 2);
+            } else {
+                g.fillRect(6, 44, 2, 2);
+                g.fillRect(10, 44, 2, 2);
+                g.fillRect(28, 44, 2, 2);
+                g.fillRect(32, 44, 2, 2);
+            }
+
+            // Tail
+            g.fillStyle(bodyColor);
+            g.fillRect(40, 30, 6, 4);
+            g.fillRect(44, 28, 4, 4);
+            g.fillStyle(COLORS.BOSS_HORN);
+            g.fillRect(46, 28, 2, 2);
+
+            g.generateTexture('boss_' + f, W, H);
+        }
+
+        g.destroy();
+
+        this.scene.anims.create({
+            key: 'boss_walk',
+            frames: [
+                { key: 'boss_0' },
+                { key: 'boss_1' }
+            ],
+            frameRate: 3,
+            repeat: -1
+        });
+    }
+
+    // -- Food (drumstick dropped by goombas) --
+    generateFood() {
+        const g = this.scene.make.graphics({ add: false });
+        g.clear();
+
+        // Meat part
+        g.fillStyle(0xc86020);
+        g.fillRect(2, 2, 8, 6);
+        g.fillRect(1, 3, 10, 4);
+        // Highlight
+        g.fillStyle(0xe88040);
+        g.fillRect(3, 3, 4, 2);
+        // Bone
+        g.fillStyle(0xf0e8d0);
+        g.fillRect(10, 4, 4, 2);
+        g.fillRect(13, 2, 2, 2);
+        g.fillRect(13, 6, 2, 2);
+
+        g.generateTexture('food', 16, 10);
+        g.destroy();
     }
 
     // -- Player Bullet (yellow vertical stroke) --

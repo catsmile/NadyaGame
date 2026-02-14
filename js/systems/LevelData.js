@@ -181,6 +181,28 @@ class LevelData {
         // Flag at column 200, castle starts at 203
         // (Flag placed programmatically in GameScene)
 
+        // Extra question blocks for fire mushroom power-ups (boss fight prep)
+        question(8, 30);
+        question(9, 35);
+        question(7, 45);
+        question(8, 48);
+        question(9, 58);
+        question(7, 64);
+        question(8, 69);
+        question(9, 72);
+        question(7, 85);
+        question(8, 90);
+        question(9, 94);
+        question(8, 100);
+        question(7, 104);
+        question(9, 108);
+        question(8, 115);
+        question(9, 120);
+        question(7, 133);
+        question(8, 145);
+        question(9, 155);
+        question(8, 163);
+
         return data;
     }
 
