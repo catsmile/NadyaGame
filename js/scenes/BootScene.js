@@ -6,6 +6,13 @@ class BootScene extends Phaser.Scene {
     create() {
         const generator = new SpriteGenerator(this);
         generator.generateAll();
-        this.scene.start('MenuScene');
+
+        // Wait for pixel font to load before showing menu
+        document.fonts.load('12px "Press Start 2P"').then(() => {
+            this.scene.start('MenuScene');
+        }).catch(() => {
+            // Start anyway if font fails to load
+            this.scene.start('MenuScene');
+        });
     }
 }
