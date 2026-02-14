@@ -34,6 +34,36 @@ class MenuScene extends Phaser.Scene {
             });
         }
 
+        // Day/night cycle
+        this.nightOverlay = this.add.rectangle(cx, cy, GAME_WIDTH, GAME_HEIGHT, 0x0a0a30).setDepth(0).setAlpha(0);
+        this.isNight = false;
+
+        // Stars (hidden during day)
+        this.stars = [];
+        for (let i = 0; i < 30; i++) {
+            const star = this.add.rectangle(
+                Phaser.Math.Between(10, GAME_WIDTH - 10),
+                Phaser.Math.Between(10, GAME_HEIGHT - 80),
+                2, 2, 0xfcfcfc
+            ).setDepth(0).setAlpha(0);
+            this.stars.push(star);
+            // Twinkle
+            this.tweens.add({
+                targets: star,
+                alpha: { from: 0, to: 0 },
+                duration: Phaser.Math.Between(600, 1200),
+                yoyo: true,
+                repeat: -1,
+                delay: Phaser.Math.Between(0, 2000)
+            });
+        }
+
+        this.time.addEvent({
+            delay: 30000,
+            loop: true,
+            callback: () => this.toggleDayNight()
+        });
+
         // Decorative elements (behind text)
         this.spawnMenuQuestionBlocks();
         this.spawnMenuPipe();
@@ -479,6 +509,24 @@ class MenuScene extends Phaser.Scene {
                 // Wrap horizontally
                 if (inv.x < -40) { inv.x = GAME_WIDTH + 30; }
                 if (inv.x > GAME_WIDTH + 40) { inv.x = -30; }
+            });
+        }
+    }
+
+    toggleDayNight() {
+        this.isNight = !this.isNight;
+        if (this.isNight) {
+            // Transition to night
+            this.tweens.add({ targets: this.nightOverlay, alpha: 0.65, duration: 3000 });
+            this.stars.forEach(star => {
+                this.tweens.add({ targets: star, alpha: { from: 0.3, to: 1 }, duration: Phaser.Math.Between(600, 1200), yoyo: true, repeat: -1, delay: Phaser.Math.Between(0, 3000) });
+            });
+        } else {
+            // Transition to day
+            this.tweens.add({ targets: this.nightOverlay, alpha: 0, duration: 3000 });
+            this.stars.forEach(star => {
+                this.tweens.killTweensOf(star);
+                star.setAlpha(0);
             });
         }
     }
